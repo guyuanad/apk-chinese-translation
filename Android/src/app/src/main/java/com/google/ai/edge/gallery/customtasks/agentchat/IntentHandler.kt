@@ -313,21 +313,57 @@ object IntentHandler {
             val originalPackageName = packageName  // Keep original for error messages
             if (intent == null) {
               val dynamicMap = getAppNameToPackageMap(context)
+
               // 4a. Try exact match (app display name → package name)
+              // Then verify the matched app actually has a launch intent
               val exactMatch = dynamicMap[packageName] ?: dynamicMap[packageName.lowercase()]
               if (exactMatch != null) {
-                packageName = exactMatch
-                Log.d(TAG, "Mapped '$params.package_name' to package '$packageName' (dynamic exact match)")
-                intent = context.packageManager.getLaunchIntentForPackage(packageName)
+                val verifiedIntent = context.packageManager.getLaunchIntentForPackage(exactMatch)
+                if (verifiedIntent != null) {
+                  packageName = exactMatch
+                  Log.d(TAG, "Mapped '$params.package_name' to package '$packageName' (dynamic exact match, verified)")
+                  intent = verifiedIntent
+                } else {
+                  Log.d(TAG, "Dynamic exact match '$params.package_name' → '$exactMatch' but no launch intent, skipping")
+                }
               }
 
-              // 4b. If no exact match, try keyword matching against app DISPLAY NAMES.
-              // Only do this for hallucinated package names (containing ".").
-              // We match extracted keywords against app display names (NOT package names)
-              // to avoid opening wrong apps.
+              // 4b. Try partial/substring match against app display names.
+              // e.g. "采货" → "采货侠", "微信" → "微信"
+              if (intent == null) {
+                val inputLower = packageName.lowercase()
+                Log.d(TAG, "Trying partial match for: '$inputLower'")
+                // Collect all matching apps, then sort by match quality
+                val candidates = mutableListOf<Pair<String, String>>() // (appName, packageName)
+                for ((appName, appPackage) in dynamicMap) {
+                  val appNameLower = appName.lowercase()
+                  if (appNameLower.contains(inputLower) || inputLower.contains(appNameLower)) {
+                    // Check it has a launch intent
+                    val launchIntent = context.packageManager.getLaunchIntentForPackage(appPackage)
+                    if (launchIntent != null) {
+                      candidates.add(appName to appPackage)
+                    }
+                  }
+                }
+                // Sort by: exact match first, then starts-with, then contains
+                // Shorter app name = better match (less specific)
+                candidates.sortWith(compareBy(
+                  { it.first.lowercase() != inputLower },  // exact match first
+                  { !it.first.lowercase().startsWith(inputLower) },  // starts-with second
+                  { it.first.length },  // shorter name first
+                ))
+                if (candidates.isNotEmpty()) {
+                  val (bestName, bestPackage) = candidates.first()
+                  packageName = bestPackage
+                  Log.d(TAG, "Partial matched '$params.package_name' to package '$packageName' via display name '$bestName' (candidates: ${candidates.joinToString(", ") { it.first }})")
+                  intent = context.packageManager.getLaunchIntentForPackage(packageName)
+                }
+              }
+
+              // 4c. If still no match and input looks like a hallucinated package name,
+              // try keyword matching against app DISPLAY NAMES.
               if (intent == null && packageName.contains(".")) {
                 val parts = packageName.split(".")
-                // Filter out common noise words AND require length >= 4
                 val noiseWords = setOf("com", "android", "net", "org", "io", "cn", "co", "ai")
                 val keywords = parts
                   .filter { it.length >= 4 && it !in noiseWords }
@@ -336,10 +372,13 @@ object IntentHandler {
                   Log.d(TAG, "Keyword matching with: $keywords")
                   for ((appName, appPackage) in dynamicMap) {
                     if (keywords.any { kw -> appName.contains(kw, ignoreCase = true) }) {
-                      packageName = appPackage
-                      Log.d(TAG, "Keyword matched '$params.package_name' to package '$packageName' via display name '$appName'")
-                      intent = context.packageManager.getLaunchIntentForPackage(packageName)
-                      if (intent != null) break
+                      val launchIntent = context.packageManager.getLaunchIntentForPackage(appPackage)
+                      if (launchIntent != null) {
+                        packageName = appPackage
+                        Log.d(TAG, "Keyword matched '$params.package_name' to package '$packageName' via display name '$appName'")
+                        intent = launchIntent
+                        break
+                      }
                     }
                   }
                 }

@@ -801,7 +801,7 @@ git push
 - [ ] **Step 3: 查看构建状态**
 
 ```bash
-GH_TOKEN=*** gh run list --repo wenyuxiang123/apk-chinese-translation --limit 3
+GH_TOKEN=***REDACTED*** gh run list --repo wenyuxiang123/apk-chinese-translation --limit 3
 ```
 
 ---
