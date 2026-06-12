@@ -1,0 +1,32 @@
+version: '1.0'
+name: android-build
+displayName: Android APK Build
+triggers:
+  push:
+    branches:
+      - main
+
+variables:
+  BUILD_DIR: Android/src
+
+stages:
+  - name: build
+    displayName: Build APK
+    strategy: default
+    trigger: auto
+    steps:
+      - step: build@gradle
+        name: gradle_build
+        displayName: Gradle Build
+        jdkVersion: 17
+        gradleVersion: '8.0'
+        commands:
+          - |
+            set -e
+            cd ${BUILD_DIR}
+            chmod +x gradlew
+            ./gradlew :app:assembleDebug
+        artifacts:
+          - name: apk
+            path:
+              - ${BUILD_DIR}/app/build/outputs/apk/debug/*.apk

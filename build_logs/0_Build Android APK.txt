@@ -1,0 +1,922 @@
+﻿2026-06-04T02:22:36.9347696Z Current runner version: '2.334.0'
+2026-06-04T02:22:36.9382724Z ##[group]Runner Image Provisioner
+2026-06-04T02:22:36.9383974Z Hosted Compute Agent
+2026-06-04T02:22:36.9384877Z Version: 20260520.533
+2026-06-04T02:22:36.9386111Z Commit: 189110e25284a9812c124fd27b339e2fb4f2f9db
+2026-06-04T02:22:36.9387273Z Build Date: 2026-05-20T17:44:04Z
+2026-06-04T02:22:36.9388383Z Worker ID: {f154fc77-2589-4a09-84a0-ddc34931a9b4}
+2026-06-04T02:22:36.9389966Z Azure Region: centralus
+2026-06-04T02:22:36.9390898Z ##[endgroup]
+2026-06-04T02:22:36.9393283Z ##[group]Operating System
+2026-06-04T02:22:36.9394269Z Ubuntu
+2026-06-04T02:22:36.9395062Z 24.04.4
+2026-06-04T02:22:36.9395992Z LTS
+2026-06-04T02:22:36.9396794Z ##[endgroup]
+2026-06-04T02:22:36.9397764Z ##[group]Runner Image
+2026-06-04T02:22:36.9398698Z Image: ubuntu-24.04
+2026-06-04T02:22:36.9399811Z Version: 20260525.161.1
+2026-06-04T02:22:36.9401911Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260525.161/images/ubuntu/Ubuntu2404-Readme.md
+2026-06-04T02:22:36.9404557Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260525.161
+2026-06-04T02:22:36.9406111Z ##[endgroup]
+2026-06-04T02:22:36.9408079Z ##[group]GITHUB_TOKEN Permissions
+2026-06-04T02:22:36.9411178Z Contents: read
+2026-06-04T02:22:36.9412082Z Metadata: read
+2026-06-04T02:22:36.9413699Z Packages: read
+2026-06-04T02:22:36.9414662Z ##[endgroup]
+2026-06-04T02:22:36.9417747Z Secret source: Actions
+2026-06-04T02:22:36.9418952Z Prepare workflow directory
+2026-06-04T02:22:37.0409013Z Prepare all required actions
+2026-06-04T02:22:37.0461853Z Getting action download info
+2026-06-04T02:22:37.4572542Z Download action repository 'actions/checkout@v3' (SHA:f43a0e5ff2bd294095638e18286ca9a3d1956744)
+2026-06-04T02:22:37.6206705Z Download action repository 'actions/setup-java@v4' (SHA:c1e323688fd81a25caa38c78aa6df2d33d3e20d9)
+2026-06-04T02:22:38.1585608Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-06-04T02:22:38.3973107Z Complete job name: Build Android APK
+2026-06-04T02:22:38.4682552Z ##[group]Run actions/checkout@v3
+2026-06-04T02:22:38.4683402Z with:
+2026-06-04T02:22:38.4683910Z   repository: wenyuxiang123/apk-chinese-translation
+2026-06-04T02:22:38.4688500Z   token: ***
+2026-06-04T02:22:38.4688944Z   ssh-strict: true
+2026-06-04T02:22:38.4689602Z   persist-credentials: true
+2026-06-04T02:22:38.4690119Z   clean: true
+2026-06-04T02:22:38.4690562Z   sparse-checkout-cone-mode: true
+2026-06-04T02:22:38.4691086Z   fetch-depth: 1
+2026-06-04T02:22:38.4691516Z   fetch-tags: false
+2026-06-04T02:22:38.4691960Z   lfs: false
+2026-06-04T02:22:38.4692371Z   submodules: false
+2026-06-04T02:22:38.4692822Z   set-safe-directory: true
+2026-06-04T02:22:38.4693510Z ##[endgroup]
+2026-06-04T02:22:38.5709887Z Syncing repository: wenyuxiang123/apk-chinese-translation
+2026-06-04T02:22:38.5712831Z ##[group]Getting Git version info
+2026-06-04T02:22:38.5714328Z Working directory is '/home/runner/work/apk-chinese-translation/apk-chinese-translation'
+2026-06-04T02:22:38.5716483Z [command]/usr/bin/git version
+2026-06-04T02:22:38.5771836Z git version 2.54.0
+2026-06-04T02:22:38.5803302Z ##[endgroup]
+2026-06-04T02:22:38.5817392Z Temporarily overriding HOME='/home/runner/work/_temp/3fdcef89-5112-4264-b53d-aefe76afc867' before making global git config changes
+2026-06-04T02:22:38.5827237Z Adding repository directory to the temporary git global config as a safe directory
+2026-06-04T02:22:38.5829969Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/apk-chinese-translation/apk-chinese-translation
+2026-06-04T02:22:38.5873409Z Deleting the contents of '/home/runner/work/apk-chinese-translation/apk-chinese-translation'
+2026-06-04T02:22:38.5876105Z ##[group]Initializing the repository
+2026-06-04T02:22:38.5877972Z [command]/usr/bin/git init /home/runner/work/apk-chinese-translation/apk-chinese-translation
+2026-06-04T02:22:38.5946272Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-06-04T02:22:38.5949962Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-06-04T02:22:38.5951975Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-06-04T02:22:38.5953196Z hint: call:
+2026-06-04T02:22:38.5953804Z hint:
+2026-06-04T02:22:38.5954619Z hint: 	git config --global init.defaultBranch <name>
+2026-06-04T02:22:38.5955601Z hint:
+2026-06-04T02:22:38.5956497Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-06-04T02:22:38.5957924Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-06-04T02:22:38.5959114Z hint:
+2026-06-04T02:22:38.5960119Z hint: 	git branch -m <name>
+2026-06-04T02:22:38.5960883Z hint:
+2026-06-04T02:22:38.5961876Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-06-04T02:22:38.5964004Z Initialized empty Git repository in /home/runner/work/apk-chinese-translation/apk-chinese-translation/.git/
+2026-06-04T02:22:38.5991422Z [command]/usr/bin/git remote add origin https://github.com/wenyuxiang123/apk-chinese-translation
+2026-06-04T02:22:38.6023433Z ##[endgroup]
+2026-06-04T02:22:38.6025001Z ##[group]Disabling automatic garbage collection
+2026-06-04T02:22:38.6026539Z [command]/usr/bin/git config --local gc.auto 0
+2026-06-04T02:22:38.6061966Z ##[endgroup]
+2026-06-04T02:22:38.6063686Z ##[group]Setting up auth
+2026-06-04T02:22:38.6067048Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-06-04T02:22:38.6103494Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-06-04T02:22:38.6434534Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-06-04T02:22:38.6464560Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-06-04T02:22:38.6711622Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-06-04T02:22:38.6758562Z ##[endgroup]
+2026-06-04T02:22:38.6760563Z ##[group]Fetching the repository
+2026-06-04T02:22:38.6763081Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --progress --no-recurse-submodules --depth=1 origin +f1204d8c3bde9cb094b234c02977a141560c6c06:refs/remotes/origin/main
+2026-06-04T02:22:38.9357130Z remote: Enumerating objects: 573, done.        
+2026-06-04T02:22:38.9371039Z remote: Counting objects:   0% (1/573)        
+2026-06-04T02:22:38.9372523Z remote: Counting objects:   1% (6/573)        
+2026-06-04T02:22:38.9373876Z remote: Counting objects:   2% (12/573)        
+2026-06-04T02:22:38.9375464Z remote: Counting objects:   3% (18/573)        
+2026-06-04T02:22:38.9376809Z remote: Counting objects:   4% (23/573)        
+2026-06-04T02:22:38.9378020Z remote: Counting objects:   5% (29/573)        
+2026-06-04T02:22:38.9379298Z remote: Counting objects:   6% (35/573)        
+2026-06-04T02:22:38.9383308Z remote: Counting objects:   7% (41/573)        
+2026-06-04T02:22:38.9385090Z remote: Counting objects:   8% (46/573)        
+2026-06-04T02:22:38.9386429Z remote: Counting objects:   9% (52/573)        
+2026-06-04T02:22:38.9387693Z remote: Counting objects:  10% (58/573)        
+2026-06-04T02:22:38.9389035Z remote: Counting objects:  11% (64/573)        
+2026-06-04T02:22:38.9390592Z remote: Counting objects:  12% (69/573)        
+2026-06-04T02:22:38.9391935Z remote: Counting objects:  13% (75/573)        
+2026-06-04T02:22:38.9393228Z remote: Counting objects:  14% (81/573)        
+2026-06-04T02:22:38.9394500Z remote: Counting objects:  15% (86/573)        
+2026-06-04T02:22:38.9395789Z remote: Counting objects:  16% (92/573)        
+2026-06-04T02:22:38.9397108Z remote: Counting objects:  17% (98/573)        
+2026-06-04T02:22:38.9398369Z remote: Counting objects:  18% (104/573)        
+2026-06-04T02:22:38.9400623Z remote: Counting objects:  19% (109/573)        
+2026-06-04T02:22:38.9401896Z remote: Counting objects:  20% (115/573)        
+2026-06-04T02:22:38.9403097Z remote: Counting objects:  21% (121/573)        
+2026-06-04T02:22:38.9410270Z remote: Counting objects:  22% (127/573)        
+2026-06-04T02:22:38.9411609Z remote: Counting objects:  23% (132/573)        
+2026-06-04T02:22:38.9412867Z remote: Counting objects:  24% (138/573)        
+2026-06-04T02:22:38.9414180Z remote: Counting objects:  25% (144/573)        
+2026-06-04T02:22:38.9415446Z remote: Counting objects:  26% (149/573)        
+2026-06-04T02:22:38.9416865Z remote: Counting objects:  27% (155/573)        
+2026-06-04T02:22:38.9418217Z remote: Counting objects:  28% (161/573)        
+2026-06-04T02:22:38.9419948Z remote: Counting objects:  29% (167/573)        
+2026-06-04T02:22:38.9421358Z remote: Counting objects:  30% (172/573)        
+2026-06-04T02:22:38.9422734Z remote: Counting objects:  31% (178/573)        
+2026-06-04T02:22:38.9424096Z remote: Counting objects:  32% (184/573)        
+2026-06-04T02:22:38.9425413Z remote: Counting objects:  33% (190/573)        
+2026-06-04T02:22:38.9426632Z remote: Counting objects:  34% (195/573)        
+2026-06-04T02:22:38.9427819Z remote: Counting objects:  35% (201/573)        
+2026-06-04T02:22:38.9429057Z remote: Counting objects:  36% (207/573)        
+2026-06-04T02:22:38.9430692Z remote: Counting objects:  37% (213/573)        
+2026-06-04T02:22:38.9432066Z remote: Counting objects:  38% (218/573)        
+2026-06-04T02:22:38.9433331Z remote: Counting objects:  39% (224/573)        
+2026-06-04T02:22:38.9434772Z remote: Counting objects:  40% (230/573)        
+2026-06-04T02:22:38.9436165Z remote: Counting objects:  41% (235/573)        
+2026-06-04T02:22:38.9437410Z remote: Counting objects:  42% (241/573)        
+2026-06-04T02:22:38.9438666Z remote: Counting objects:  43% (247/573)        
+2026-06-04T02:22:38.9440173Z remote: Counting objects:  44% (253/573)        
+2026-06-04T02:22:38.9441538Z remote: Counting objects:  45% (258/573)        
+2026-06-04T02:22:38.9444239Z remote: Counting objects:  46% (264/573)        
+2026-06-04T02:22:38.9446116Z remote: Counting objects:  47% (270/573)        
+2026-06-04T02:22:38.9452398Z remote: Counting objects:  48% (276/573)        
+2026-06-04T02:22:38.9764048Z remote: Counting objects:  49% (281/573)        
+2026-06-04T02:22:38.9765224Z remote: Counting objects:  50% (287/573)        
+2026-06-04T02:22:38.9766659Z remote: Counting objects:  51% (293/573)        
+2026-06-04T02:22:38.9769028Z remote: Counting objects:  52% (298/573)        
+2026-06-04T02:22:38.9770373Z remote: Counting objects:  53% (304/573)        
+2026-06-04T02:22:38.9771377Z remote: Counting objects:  54% (310/573)        
+2026-06-04T02:22:38.9772353Z remote: Counting objects:  55% (316/573)        
+2026-06-04T02:22:38.9773339Z remote: Counting objects:  56% (321/573)        
+2026-06-04T02:22:38.9774326Z remote: Counting objects:  57% (327/573)        
+2026-06-04T02:22:38.9775287Z remote: Counting objects:  58% (333/573)        
+2026-06-04T02:22:38.9776302Z remote: Counting objects:  59% (339/573)        
+2026-06-04T02:22:38.9777281Z remote: Counting objects:  60% (344/573)        
+2026-06-04T02:22:38.9778243Z remote: Counting objects:  61% (350/573)        
+2026-06-04T02:22:38.9779245Z remote: Counting objects:  62% (356/573)        
+2026-06-04T02:22:38.9780440Z remote: Counting objects:  63% (361/573)        
+2026-06-04T02:22:38.9781550Z remote: Counting objects:  64% (367/573)        
+2026-06-04T02:22:38.9782531Z remote: Counting objects:  65% (373/573)        
+2026-06-04T02:22:38.9783500Z remote: Counting objects:  66% (379/573)        
+2026-06-04T02:22:38.9784486Z remote: Counting objects:  67% (384/573)        
+2026-06-04T02:22:38.9785457Z remote: Counting objects:  68% (390/573)        
+2026-06-04T02:22:38.9786419Z remote: Counting objects:  69% (396/573)        
+2026-06-04T02:22:38.9787388Z remote: Counting objects:  70% (402/573)        
+2026-06-04T02:22:38.9788368Z remote: Counting objects:  71% (407/573)        
+2026-06-04T02:22:38.9789816Z remote: Counting objects:  72% (413/573)        
+2026-06-04T02:22:38.9790859Z remote: Counting objects:  73% (419/573)        
+2026-06-04T02:22:38.9791840Z remote: Counting objects:  74% (425/573)        
+2026-06-04T02:22:38.9792816Z remote: Counting objects:  75% (430/573)        
+2026-06-04T02:22:38.9793781Z remote: Counting objects:  76% (436/573)        
+2026-06-04T02:22:38.9794750Z remote: Counting objects:  77% (442/573)        
+2026-06-04T02:22:38.9795844Z remote: Counting objects:  78% (447/573)        
+2026-06-04T02:22:38.9798361Z remote: Counting objects:  79% (453/573)        
+2026-06-04T02:22:38.9799636Z remote: Counting objects:  80% (459/573)        
+2026-06-04T02:22:38.9800692Z remote: Counting objects:  81% (465/573)        
+2026-06-04T02:22:38.9801667Z remote: Counting objects:  82% (470/573)        
+2026-06-04T02:22:38.9802628Z remote: Counting objects:  83% (476/573)        
+2026-06-04T02:22:38.9803583Z remote: Counting objects:  84% (482/573)        
+2026-06-04T02:22:38.9804563Z remote: Counting objects:  85% (488/573)        
+2026-06-04T02:22:38.9805523Z remote: Counting objects:  86% (493/573)        
+2026-06-04T02:22:38.9806479Z remote: Counting objects:  87% (499/573)        
+2026-06-04T02:22:38.9807427Z remote: Counting objects:  88% (505/573)        
+2026-06-04T02:22:38.9808367Z remote: Counting objects:  89% (510/573)        
+2026-06-04T02:22:38.9809342Z remote: Counting objects:  90% (516/573)        
+2026-06-04T02:22:38.9810561Z remote: Counting objects:  91% (522/573)        
+2026-06-04T02:22:38.9811541Z remote: Counting objects:  92% (528/573)        
+2026-06-04T02:22:38.9812493Z remote: Counting objects:  93% (533/573)        
+2026-06-04T02:22:38.9813443Z remote: Counting objects:  94% (539/573)        
+2026-06-04T02:22:38.9814400Z remote: Counting objects:  95% (545/573)        
+2026-06-04T02:22:38.9815338Z remote: Counting objects:  96% (551/573)        
+2026-06-04T02:22:38.9816284Z remote: Counting objects:  97% (556/573)        
+2026-06-04T02:22:38.9817500Z remote: Counting objects:  98% (562/573)        
+2026-06-04T02:22:38.9818374Z remote: Counting objects:  99% (568/573)        
+2026-06-04T02:22:38.9819338Z remote: Counting objects: 100% (573/573)        
+2026-06-04T02:22:38.9820604Z remote: Counting objects: 100% (573/573), done.        
+2026-06-04T02:22:38.9821728Z remote: Compressing objects:   0% (1/474)        
+2026-06-04T02:22:38.9822754Z remote: Compressing objects:   1% (5/474)        
+2026-06-04T02:22:38.9823770Z remote: Compressing objects:   2% (10/474)        
+2026-06-04T02:22:38.9824779Z remote: Compressing objects:   3% (15/474)        
+2026-06-04T02:22:38.9825785Z remote: Compressing objects:   4% (19/474)        
+2026-06-04T02:22:38.9826779Z remote: Compressing objects:   5% (24/474)        
+2026-06-04T02:22:38.9827782Z remote: Compressing objects:   6% (29/474)        
+2026-06-04T02:22:38.9828790Z remote: Compressing objects:   7% (34/474)        
+2026-06-04T02:22:38.9829926Z remote: Compressing objects:   8% (38/474)        
+2026-06-04T02:22:38.9830936Z remote: Compressing objects:   9% (43/474)        
+2026-06-04T02:22:38.9831943Z remote: Compressing objects:  10% (48/474)        
+2026-06-04T02:22:38.9832959Z remote: Compressing objects:  11% (53/474)        
+2026-06-04T02:22:38.9833973Z remote: Compressing objects:  12% (57/474)        
+2026-06-04T02:22:38.9834968Z remote: Compressing objects:  13% (62/474)        
+2026-06-04T02:22:38.9835969Z remote: Compressing objects:  14% (67/474)        
+2026-06-04T02:22:38.9837224Z remote: Compressing objects:  15% (72/474)        
+2026-06-04T02:22:38.9839056Z remote: Compressing objects:  16% (76/474)        
+2026-06-04T02:22:38.9840128Z remote: Compressing objects:  17% (81/474)        
+2026-06-04T02:22:38.9840779Z remote: Compressing objects:  18% (86/474)        
+2026-06-04T02:22:38.9841415Z remote: Compressing objects:  19% (91/474)        
+2026-06-04T02:22:38.9842044Z remote: Compressing objects:  20% (95/474)        
+2026-06-04T02:22:38.9842670Z remote: Compressing objects:  21% (100/474)        
+2026-06-04T02:22:38.9843541Z remote: Compressing objects:  22% (105/474)        
+2026-06-04T02:22:38.9844177Z remote: Compressing objects:  23% (110/474)        
+2026-06-04T02:22:38.9844810Z remote: Compressing objects:  24% (114/474)        
+2026-06-04T02:22:38.9845453Z remote: Compressing objects:  25% (119/474)        
+2026-06-04T02:22:38.9846082Z remote: Compressing objects:  26% (124/474)        
+2026-06-04T02:22:38.9846703Z remote: Compressing objects:  27% (128/474)        
+2026-06-04T02:22:38.9847769Z remote: Compressing objects:  28% (133/474)        
+2026-06-04T02:22:38.9862057Z remote: Compressing objects:  29% (138/474)        
+2026-06-04T02:22:38.9901910Z remote: Compressing objects:  30% (143/474)        
+2026-06-04T02:22:38.9916005Z remote: Compressing objects:  31% (147/474)        
+2026-06-04T02:22:38.9930755Z remote: Compressing objects:  32% (152/474)        
+2026-06-04T02:22:38.9939256Z remote: Compressing objects:  33% (157/474)        
+2026-06-04T02:22:38.9946688Z remote: Compressing objects:  34% (162/474)        
+2026-06-04T02:22:39.0040282Z remote: Compressing objects:  35% (166/474)        
+2026-06-04T02:22:39.0041566Z remote: Compressing objects:  36% (171/474)        
+2026-06-04T02:22:39.0043152Z remote: Compressing objects:  37% (176/474)        
+2026-06-04T02:22:39.0044228Z remote: Compressing objects:  38% (181/474)        
+2026-06-04T02:22:39.0045244Z remote: Compressing objects:  39% (185/474)        
+2026-06-04T02:22:39.0046240Z remote: Compressing objects:  40% (190/474)        
+2026-06-04T02:22:39.0047210Z remote: Compressing objects:  41% (195/474)        
+2026-06-04T02:22:39.0050413Z remote: Compressing objects:  42% (200/474)        
+2026-06-04T02:22:39.0065451Z remote: Compressing objects:  43% (204/474)        
+2026-06-04T02:22:39.0067012Z remote: Compressing objects:  44% (209/474)        
+2026-06-04T02:22:39.0080162Z remote: Compressing objects:  45% (214/474)        
+2026-06-04T02:22:39.0086838Z remote: Compressing objects:  46% (219/474)        
+2026-06-04T02:22:39.0088221Z remote: Compressing objects:  47% (223/474)        
+2026-06-04T02:22:39.0089235Z remote: Compressing objects:  48% (228/474)        
+2026-06-04T02:22:39.0095227Z remote: Compressing objects:  49% (233/474)        
+2026-06-04T02:22:39.0096421Z remote: Compressing objects:  50% (237/474)        
+2026-06-04T02:22:39.0097467Z remote: Compressing objects:  51% (242/474)        
+2026-06-04T02:22:39.0241120Z remote: Compressing objects:  52% (247/474)        
+2026-06-04T02:22:39.0244170Z remote: Compressing objects:  53% (252/474)        
+2026-06-04T02:22:39.0245690Z remote: Compressing objects:  54% (256/474)        
+2026-06-04T02:22:39.0248013Z remote: Compressing objects:  55% (261/474)        
+2026-06-04T02:22:39.0249123Z remote: Compressing objects:  56% (266/474)        
+2026-06-04T02:22:39.0251782Z remote: Compressing objects:  57% (271/474)        
+2026-06-04T02:22:39.0255449Z remote: Compressing objects:  58% (275/474)        
+2026-06-04T02:22:39.0259996Z remote: Compressing objects:  59% (280/474)        
+2026-06-04T02:22:39.0261301Z remote: Compressing objects:  60% (285/474)        
+2026-06-04T02:22:39.0264442Z remote: Compressing objects:  61% (290/474)        
+2026-06-04T02:22:39.0267002Z remote: Compressing objects:  62% (294/474)        
+2026-06-04T02:22:39.0279810Z remote: Compressing objects:  63% (299/474)        
+2026-06-04T02:22:39.0282555Z remote: Compressing objects:  64% (304/474)        
+2026-06-04T02:22:39.0286420Z remote: Compressing objects:  65% (309/474)        
+2026-06-04T02:22:39.0288395Z remote: Compressing objects:  66% (313/474)        
+2026-06-04T02:22:39.0290688Z remote: Compressing objects:  67% (318/474)        
+2026-06-04T02:22:39.0292492Z remote: Compressing objects:  68% (323/474)        
+2026-06-04T02:22:39.0293567Z remote: Compressing objects:  69% (328/474)        
+2026-06-04T02:22:39.0294778Z remote: Compressing objects:  70% (332/474)        
+2026-06-04T02:22:39.0295936Z remote: Compressing objects:  71% (337/474)        
+2026-06-04T02:22:39.0298183Z remote: Compressing objects:  72% (342/474)        
+2026-06-04T02:22:39.0299655Z remote: Compressing objects:  73% (347/474)        
+2026-06-04T02:22:39.0301758Z remote: Compressing objects:  74% (351/474)        
+2026-06-04T02:22:39.0303137Z remote: Compressing objects:  75% (356/474)        
+2026-06-04T02:22:39.0304636Z remote: Compressing objects:  76% (361/474)        
+2026-06-04T02:22:39.0305979Z remote: Compressing objects:  77% (365/474)        
+2026-06-04T02:22:39.0307731Z remote: Compressing objects:  78% (370/474)        
+2026-06-04T02:22:39.0309328Z remote: Compressing objects:  79% (375/474)        
+2026-06-04T02:22:39.0311239Z remote: Compressing objects:  80% (380/474)        
+2026-06-04T02:22:39.0312631Z remote: Compressing objects:  81% (384/474)        
+2026-06-04T02:22:39.0314200Z remote: Compressing objects:  82% (389/474)        
+2026-06-04T02:22:39.0315612Z remote: Compressing objects:  83% (394/474)        
+2026-06-04T02:22:39.0317434Z remote: Compressing objects:  84% (399/474)        
+2026-06-04T02:22:39.0319066Z remote: Compressing objects:  85% (403/474)        
+2026-06-04T02:22:39.0321036Z remote: Compressing objects:  86% (408/474)        
+2026-06-04T02:22:39.0322439Z remote: Compressing objects:  87% (413/474)        
+2026-06-04T02:22:39.0324047Z remote: Compressing objects:  88% (418/474)        
+2026-06-04T02:22:39.0325142Z remote: Compressing objects:  89% (422/474)        
+2026-06-04T02:22:39.0326396Z remote: Compressing objects:  90% (427/474)        
+2026-06-04T02:22:39.0328678Z remote: Compressing objects:  91% (432/474)        
+2026-06-04T02:22:39.0329975Z remote: Compressing objects:  92% (437/474)        
+2026-06-04T02:22:39.0333455Z remote: Compressing objects:  93% (441/474)        
+2026-06-04T02:22:39.0335502Z remote: Compressing objects:  94% (446/474)        
+2026-06-04T02:22:39.0336655Z remote: Compressing objects:  95% (451/474)        
+2026-06-04T02:22:39.0338754Z remote: Compressing objects:  96% (456/474)        
+2026-06-04T02:22:39.0340276Z remote: Compressing objects:  97% (460/474)        
+2026-06-04T02:22:39.0351136Z remote: Compressing objects:  98% (465/474)        
+2026-06-04T02:22:39.0352678Z remote: Compressing objects:  99% (470/474)        
+2026-06-04T02:22:39.0354748Z remote: Compressing objects: 100% (474/474)        
+2026-06-04T02:22:39.0355894Z remote: Compressing objects: 100% (474/474), done.        
+2026-06-04T02:22:39.0356960Z Receiving objects:   0% (1/573)
+2026-06-04T02:22:39.0357854Z Receiving objects:   1% (6/573)
+2026-06-04T02:22:39.0358758Z Receiving objects:   2% (12/573)
+2026-06-04T02:22:39.0360045Z Receiving objects:   3% (18/573)
+2026-06-04T02:22:39.0361327Z Receiving objects:   4% (23/573)
+2026-06-04T02:22:39.0362145Z Receiving objects:   5% (29/573)
+2026-06-04T02:22:39.0362940Z Receiving objects:   6% (35/573)
+2026-06-04T02:22:39.0366920Z Receiving objects:   7% (41/573)
+2026-06-04T02:22:39.0367866Z Receiving objects:   8% (46/573)
+2026-06-04T02:22:39.0494931Z Receiving objects:   9% (52/573)
+2026-06-04T02:22:39.0507266Z Receiving objects:  10% (58/573)
+2026-06-04T02:22:39.0508536Z Receiving objects:  11% (64/573)
+2026-06-04T02:22:39.0510660Z Receiving objects:  12% (69/573)
+2026-06-04T02:22:39.0554510Z Receiving objects:  13% (75/573)
+2026-06-04T02:22:39.0601749Z Receiving objects:  14% (81/573)
+2026-06-04T02:22:39.1064257Z Receiving objects:  15% (86/573)
+2026-06-04T02:22:39.1065800Z Receiving objects:  16% (92/573)
+2026-06-04T02:22:39.1066998Z Receiving objects:  17% (98/573)
+2026-06-04T02:22:39.1067905Z Receiving objects:  18% (104/573)
+2026-06-04T02:22:39.1068940Z Receiving objects:  19% (109/573)
+2026-06-04T02:22:39.1092917Z Receiving objects:  20% (115/573)
+2026-06-04T02:22:39.1110489Z Receiving objects:  21% (121/573)
+2026-06-04T02:22:39.1111742Z Receiving objects:  22% (127/573)
+2026-06-04T02:22:39.1115528Z Receiving objects:  23% (132/573)
+2026-06-04T02:22:39.1268370Z Receiving objects:  24% (138/573)
+2026-06-04T02:22:39.1288693Z Receiving objects:  25% (144/573)
+2026-06-04T02:22:39.1303363Z Receiving objects:  26% (149/573)
+2026-06-04T02:22:39.1310203Z Receiving objects:  27% (155/573)
+2026-06-04T02:22:39.1317351Z Receiving objects:  28% (161/573)
+2026-06-04T02:22:39.1322684Z Receiving objects:  29% (167/573)
+2026-06-04T02:22:39.1328676Z Receiving objects:  30% (172/573)
+2026-06-04T02:22:39.1337003Z Receiving objects:  31% (178/573)
+2026-06-04T02:22:39.1340047Z Receiving objects:  32% (184/573)
+2026-06-04T02:22:39.1350420Z Receiving objects:  33% (190/573)
+2026-06-04T02:22:39.1357021Z Receiving objects:  34% (195/573)
+2026-06-04T02:22:39.1359703Z Receiving objects:  35% (201/573)
+2026-06-04T02:22:39.1367149Z Receiving objects:  36% (207/573)
+2026-06-04T02:22:39.1511652Z Receiving objects:  37% (213/573)
+2026-06-04T02:22:39.1513582Z Receiving objects:  38% (218/573)
+2026-06-04T02:22:39.1524705Z Receiving objects:  39% (224/573)
+2026-06-04T02:22:39.1530640Z Receiving objects:  40% (230/573)
+2026-06-04T02:22:39.1535117Z Receiving objects:  41% (235/573)
+2026-06-04T02:22:39.1547145Z Receiving objects:  42% (241/573)
+2026-06-04T02:22:39.1553821Z Receiving objects:  43% (247/573)
+2026-06-04T02:22:39.1583097Z Receiving objects:  44% (253/573)
+2026-06-04T02:22:39.1600811Z Receiving objects:  45% (258/573)
+2026-06-04T02:22:39.1602316Z Receiving objects:  46% (264/573)
+2026-06-04T02:22:39.1620460Z Receiving objects:  47% (270/573)
+2026-06-04T02:22:39.1640480Z Receiving objects:  48% (276/573)
+2026-06-04T02:22:39.1660424Z Receiving objects:  49% (281/573)
+2026-06-04T02:22:39.1661669Z Receiving objects:  50% (287/573)
+2026-06-04T02:22:39.1680413Z Receiving objects:  51% (293/573)
+2026-06-04T02:22:39.1700473Z Receiving objects:  52% (298/573)
+2026-06-04T02:22:39.1702342Z Receiving objects:  53% (304/573)
+2026-06-04T02:22:39.1703710Z Receiving objects:  54% (310/573)
+2026-06-04T02:22:39.1704860Z Receiving objects:  55% (316/573)
+2026-06-04T02:22:39.1721967Z Receiving objects:  56% (321/573)
+2026-06-04T02:22:39.1723219Z Receiving objects:  57% (327/573)
+2026-06-04T02:22:39.1724460Z Receiving objects:  58% (333/573)
+2026-06-04T02:22:39.1725795Z Receiving objects:  59% (339/573)
+2026-06-04T02:22:39.1727332Z Receiving objects:  60% (344/573)
+2026-06-04T02:22:39.1728899Z Receiving objects:  61% (350/573)
+2026-06-04T02:22:39.1730609Z Receiving objects:  62% (356/573)
+2026-06-04T02:22:39.1731910Z Receiving objects:  63% (361/573)
+2026-06-04T02:22:39.1847778Z Receiving objects:  64% (367/573)
+2026-06-04T02:22:39.2044897Z Receiving objects:  65% (373/573)
+2026-06-04T02:22:39.2053962Z Receiving objects:  66% (379/573)
+2026-06-04T02:22:39.2057658Z Receiving objects:  67% (384/573)
+2026-06-04T02:22:39.2062502Z Receiving objects:  68% (390/573)
+2026-06-04T02:22:39.2081199Z Receiving objects:  69% (396/573)
+2026-06-04T02:22:39.2082323Z Receiving objects:  70% (402/573)
+2026-06-04T02:22:39.2083404Z Receiving objects:  71% (407/573)
+2026-06-04T02:22:39.2086261Z Receiving objects:  72% (413/573)
+2026-06-04T02:22:39.2093540Z Receiving objects:  73% (419/573)
+2026-06-04T02:22:39.2104465Z Receiving objects:  74% (425/573)
+2026-06-04T02:22:39.2106950Z Receiving objects:  75% (430/573)
+2026-06-04T02:22:39.2318852Z Receiving objects:  76% (436/573)
+2026-06-04T02:22:39.2351751Z Receiving objects:  77% (442/573)
+2026-06-04T02:22:39.2362898Z Receiving objects:  78% (447/573)
+2026-06-04T02:22:39.2364085Z Receiving objects:  79% (453/573)
+2026-06-04T02:22:39.2365221Z Receiving objects:  80% (459/573)
+2026-06-04T02:22:39.2366692Z Receiving objects:  81% (465/573)
+2026-06-04T02:22:39.2367738Z Receiving objects:  82% (470/573)
+2026-06-04T02:22:39.2369806Z Receiving objects:  83% (476/573)
+2026-06-04T02:22:39.2549167Z Receiving objects:  84% (482/573)
+2026-06-04T02:22:39.2636305Z Receiving objects:  85% (488/573)
+2026-06-04T02:22:39.2712440Z Receiving objects:  86% (493/573)
+2026-06-04T02:22:39.2827580Z Receiving objects:  87% (499/573)
+2026-06-04T02:22:39.2904383Z Receiving objects:  88% (505/573)
+2026-06-04T02:22:39.2980599Z Receiving objects:  89% (510/573)
+2026-06-04T02:22:39.3140669Z Receiving objects:  90% (516/573)
+2026-06-04T02:22:39.3223239Z Receiving objects:  91% (522/573)
+2026-06-04T02:22:39.3301870Z Receiving objects:  92% (528/573)
+2026-06-04T02:22:39.3391573Z Receiving objects:  93% (533/573)
+2026-06-04T02:22:39.3494580Z Receiving objects:  94% (539/573)
+2026-06-04T02:22:39.3576044Z Receiving objects:  95% (545/573)
+2026-06-04T02:22:39.3639666Z Receiving objects:  96% (551/573)
+2026-06-04T02:22:39.3736756Z Receiving objects:  97% (556/573)
+2026-06-04T02:22:39.3818819Z Receiving objects:  98% (562/573)
+2026-06-04T02:22:39.3855944Z Receiving objects:  99% (568/573)
+2026-06-04T02:22:39.3862922Z remote: Total 573 (delta 118), reused 419 (delta 63), pack-reused 0 (from 0)        
+2026-06-04T02:22:39.3864882Z Receiving objects: 100% (573/573)
+2026-06-04T02:22:39.3876779Z Receiving objects: 100% (573/573), 9.43 MiB | 26.83 MiB/s, done.
+2026-06-04T02:22:39.3886127Z Resolving deltas:   0% (0/118)
+2026-06-04T02:22:39.3887507Z Resolving deltas:   1% (2/118)
+2026-06-04T02:22:39.3888772Z Resolving deltas:   2% (3/118)
+2026-06-04T02:22:39.3895581Z Resolving deltas:   3% (4/118)
+2026-06-04T02:22:39.3897998Z Resolving deltas:   4% (5/118)
+2026-06-04T02:22:39.3927263Z Resolving deltas:   5% (6/118)
+2026-06-04T02:22:39.3930835Z Resolving deltas:   6% (8/118)
+2026-06-04T02:22:39.3960628Z Resolving deltas:   7% (9/118)
+2026-06-04T02:22:39.3961721Z Resolving deltas:   8% (10/118)
+2026-06-04T02:22:39.3962685Z Resolving deltas:   9% (11/118)
+2026-06-04T02:22:39.3963624Z Resolving deltas:  10% (12/118)
+2026-06-04T02:22:39.3964559Z Resolving deltas:  11% (13/118)
+2026-06-04T02:22:39.3965470Z Resolving deltas:  12% (15/118)
+2026-06-04T02:22:39.3966406Z Resolving deltas:  13% (16/118)
+2026-06-04T02:22:39.3967371Z Resolving deltas:  14% (17/118)
+2026-06-04T02:22:39.3968292Z Resolving deltas:  15% (18/118)
+2026-06-04T02:22:39.3969207Z Resolving deltas:  16% (19/118)
+2026-06-04T02:22:39.3970307Z Resolving deltas:  17% (21/118)
+2026-06-04T02:22:39.3971226Z Resolving deltas:  18% (22/118)
+2026-06-04T02:22:39.3972141Z Resolving deltas:  19% (23/118)
+2026-06-04T02:22:39.3973133Z Resolving deltas:  20% (24/118)
+2026-06-04T02:22:39.3990002Z Resolving deltas:  21% (25/118)
+2026-06-04T02:22:39.3991371Z Resolving deltas:  22% (26/118)
+2026-06-04T02:22:39.3992146Z Resolving deltas:  23% (28/118)
+2026-06-04T02:22:39.3993004Z Resolving deltas:  24% (29/118)
+2026-06-04T02:22:39.3993906Z Resolving deltas:  25% (30/118)
+2026-06-04T02:22:39.3994799Z Resolving deltas:  26% (31/118)
+2026-06-04T02:22:39.3995688Z Resolving deltas:  27% (32/118)
+2026-06-04T02:22:39.3996516Z Resolving deltas:  28% (34/118)
+2026-06-04T02:22:39.3997401Z Resolving deltas:  29% (35/118)
+2026-06-04T02:22:39.3998282Z Resolving deltas:  30% (36/118)
+2026-06-04T02:22:39.3999153Z Resolving deltas:  31% (37/118)
+2026-06-04T02:22:39.4000214Z Resolving deltas:  32% (38/118)
+2026-06-04T02:22:39.4001040Z Resolving deltas:  33% (39/118)
+2026-06-04T02:22:39.4046864Z Resolving deltas:  34% (41/118)
+2026-06-04T02:22:39.4047455Z Resolving deltas:  35% (42/118)
+2026-06-04T02:22:39.4047976Z Resolving deltas:  36% (43/118)
+2026-06-04T02:22:39.4048467Z Resolving deltas:  37% (44/118)
+2026-06-04T02:22:39.4048975Z Resolving deltas:  38% (45/118)
+2026-06-04T02:22:39.4049719Z Resolving deltas:  40% (48/118)
+2026-06-04T02:22:39.4050617Z Resolving deltas:  41% (49/118)
+2026-06-04T02:22:39.4051360Z Resolving deltas:  42% (50/118)
+2026-06-04T02:22:39.4052089Z Resolving deltas:  43% (51/118)
+2026-06-04T02:22:39.4052856Z Resolving deltas:  44% (52/118)
+2026-06-04T02:22:39.4053618Z Resolving deltas:  45% (54/118)
+2026-06-04T02:22:39.4054451Z Resolving deltas:  46% (55/118)
+2026-06-04T02:22:39.4055218Z Resolving deltas:  47% (56/118)
+2026-06-04T02:22:39.4055972Z Resolving deltas:  48% (57/118)
+2026-06-04T02:22:39.4056742Z Resolving deltas:  49% (58/118)
+2026-06-04T02:22:39.4057524Z Resolving deltas:  50% (59/118)
+2026-06-04T02:22:39.4058288Z Resolving deltas:  51% (61/118)
+2026-06-04T02:22:39.4059055Z Resolving deltas:  52% (62/118)
+2026-06-04T02:22:39.4059980Z Resolving deltas:  53% (63/118)
+2026-06-04T02:22:39.4060746Z Resolving deltas:  54% (64/118)
+2026-06-04T02:22:39.4061492Z Resolving deltas:  55% (65/118)
+2026-06-04T02:22:39.4062531Z Resolving deltas:  57% (68/118)
+2026-06-04T02:22:39.4063281Z Resolving deltas:  58% (69/118)
+2026-06-04T02:22:39.4064020Z Resolving deltas:  59% (70/118)
+2026-06-04T02:22:39.4064775Z Resolving deltas:  60% (71/118)
+2026-06-04T02:22:39.4065517Z Resolving deltas:  61% (72/118)
+2026-06-04T02:22:39.4066262Z Resolving deltas:  62% (74/118)
+2026-06-04T02:22:39.4067012Z Resolving deltas:  63% (75/118)
+2026-06-04T02:22:39.4067748Z Resolving deltas:  64% (76/118)
+2026-06-04T02:22:39.4068492Z Resolving deltas:  65% (77/118)
+2026-06-04T02:22:39.4069237Z Resolving deltas:  66% (78/118)
+2026-06-04T02:22:39.4070281Z Resolving deltas:  67% (80/118)
+2026-06-04T02:22:39.4071051Z Resolving deltas:  68% (81/118)
+2026-06-04T02:22:39.4071811Z Resolving deltas:  69% (82/118)
+2026-06-04T02:22:39.4072568Z Resolving deltas:  70% (83/118)
+2026-06-04T02:22:39.4073315Z Resolving deltas:  71% (84/118)
+2026-06-04T02:22:39.4074074Z Resolving deltas:  72% (86/118)
+2026-06-04T02:22:39.4074849Z Resolving deltas:  73% (87/118)
+2026-06-04T02:22:39.4075620Z Resolving deltas:  74% (88/118)
+2026-06-04T02:22:39.4076383Z Resolving deltas:  75% (89/118)
+2026-06-04T02:22:39.4077141Z Resolving deltas:  76% (90/118)
+2026-06-04T02:22:39.4077884Z Resolving deltas:  77% (91/118)
+2026-06-04T02:22:39.4079691Z Resolving deltas:  79% (94/118)
+2026-06-04T02:22:39.4080585Z Resolving deltas:  80% (95/118)
+2026-06-04T02:22:39.4081356Z Resolving deltas:  81% (96/118)
+2026-06-04T02:22:39.4082128Z Resolving deltas:  82% (97/118)
+2026-06-04T02:22:39.4082903Z Resolving deltas:  83% (98/118)
+2026-06-04T02:22:39.4083684Z Resolving deltas:  84% (100/118)
+2026-06-04T02:22:39.4084466Z Resolving deltas:  85% (101/118)
+2026-06-04T02:22:39.4085247Z Resolving deltas:  86% (102/118)
+2026-06-04T02:22:39.4086017Z Resolving deltas:  87% (103/118)
+2026-06-04T02:22:39.4086807Z Resolving deltas:  88% (104/118)
+2026-06-04T02:22:39.4087592Z Resolving deltas:  89% (106/118)
+2026-06-04T02:22:39.4088372Z Resolving deltas:  91% (108/118)
+2026-06-04T02:22:39.4089647Z Resolving deltas:  92% (109/118)
+2026-06-04T02:22:39.4090460Z Resolving deltas:  93% (110/118)
+2026-06-04T02:22:39.4091257Z Resolving deltas:  94% (111/118)
+2026-06-04T02:22:39.4092038Z Resolving deltas:  95% (113/118)
+2026-06-04T02:22:39.4092835Z Resolving deltas:  96% (114/118)
+2026-06-04T02:22:39.4093612Z Resolving deltas:  97% (115/118)
+2026-06-04T02:22:39.4094396Z Resolving deltas:  98% (116/118)
+2026-06-04T02:22:39.4095198Z Resolving deltas:  99% (117/118)
+2026-06-04T02:22:39.4095996Z Resolving deltas: 100% (118/118)
+2026-06-04T02:22:39.4097199Z Resolving deltas: 100% (118/118), done.
+2026-06-04T02:22:39.4203468Z From https://github.com/wenyuxiang123/apk-chinese-translation
+2026-06-04T02:22:39.4240031Z  * [new ref]         f1204d8c3bde9cb094b234c02977a141560c6c06 -> origin/main
+2026-06-04T02:22:39.4301120Z ##[endgroup]
+2026-06-04T02:22:39.4481578Z ##[group]Determining the checkout info
+2026-06-04T02:22:39.4483031Z ##[endgroup]
+2026-06-04T02:22:39.4597915Z ##[group]Checking out the ref
+2026-06-04T02:22:39.4599665Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-06-04T02:22:39.5418517Z Switched to a new branch 'main'
+2026-06-04T02:22:39.5422971Z branch 'main' set up to track 'origin/main'.
+2026-06-04T02:22:39.5433380Z ##[endgroup]
+2026-06-04T02:22:39.5437459Z [command]/usr/bin/git log -1 --format='%H'
+2026-06-04T02:22:39.5457911Z 'f1204d8c3bde9cb094b234c02977a141560c6c06'
+2026-06-04T02:22:39.5836916Z ##[group]Run actions/setup-java@v4
+2026-06-04T02:22:39.5838082Z with:
+2026-06-04T02:22:39.5838932Z   distribution: temurin
+2026-06-04T02:22:39.5840064Z   java-version: 21
+2026-06-04T02:22:39.5840997Z   java-package: jdk
+2026-06-04T02:22:39.5841947Z   check-latest: false
+2026-06-04T02:22:39.5842908Z   server-id: github
+2026-06-04T02:22:39.5843864Z   server-username: GITHUB_ACTOR
+2026-06-04T02:22:39.5844987Z   server-password: GITHUB_TOKEN
+2026-06-04T02:22:39.5846120Z   overwrite-settings: true
+2026-06-04T02:22:39.5847145Z   job-status: success
+2026-06-04T02:22:39.5858447Z   token: ***
+2026-06-04T02:22:39.5859330Z ##[endgroup]
+2026-06-04T02:22:39.8217800Z ##[group]Installed distributions
+2026-06-04T02:22:39.8366743Z Resolved Java 21.0.11+10 from tool-cache
+2026-06-04T02:22:39.8368995Z Setting Java 21.0.11+10 as the default
+2026-06-04T02:22:39.8511690Z Creating toolchains.xml for JDK version 21 from temurin
+2026-06-04T02:22:39.8514580Z Writing to /home/runner/.m2/toolchains.xml
+2026-06-04T02:22:39.8516802Z 
+2026-06-04T02:22:39.8517709Z Java configuration:
+2026-06-04T02:22:39.8520278Z   Distribution: temurin
+2026-06-04T02:22:39.8522047Z   Version: 21.0.11+10
+2026-06-04T02:22:39.8525033Z   Path: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.11-10/x64
+2026-06-04T02:22:39.8527162Z 
+2026-06-04T02:22:39.8529848Z ##[endgroup]
+2026-06-04T02:22:39.8550352Z Creating settings.xml with server-id: github
+2026-06-04T02:22:39.8553717Z Writing to /home/runner/.m2/settings.xml
+2026-06-04T02:22:39.8687774Z ##[group]Run chmod +x gradlew
+2026-06-04T02:22:39.8689030Z [36;1mchmod +x gradlew[0m
+2026-06-04T02:22:39.8724483Z shell: /usr/bin/bash -e {0}
+2026-06-04T02:22:39.8725526Z env:
+2026-06-04T02:22:39.8726764Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.11-10/x64
+2026-06-04T02:22:39.8728825Z   JAVA_HOME_21_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.11-10/x64
+2026-06-04T02:22:39.8730617Z ##[endgroup]
+2026-06-04T02:22:39.8898771Z ##[group]Run ./gradlew assembleRelease --stacktrace
+2026-06-04T02:22:39.8900539Z [36;1m./gradlew assembleRelease --stacktrace[0m
+2026-06-04T02:22:39.8928562Z shell: /usr/bin/bash -e {0}
+2026-06-04T02:22:39.8929784Z env:
+2026-06-04T02:22:39.8931000Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.11-10/x64
+2026-06-04T02:22:39.8933000Z   JAVA_HOME_21_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.11-10/x64
+2026-06-04T02:22:39.8934579Z ##[endgroup]
+2026-06-04T02:22:41.9168661Z Downloading https://services.gradle.org/distributions/gradle-8.10.2-bin.zip
+2026-06-04T02:22:45.9061391Z .............10%.............20%.............30%.............40%.............50%.............60%.............70%.............80%.............90%.............100%
+2026-06-04T02:22:47.3616065Z 
+2026-06-04T02:22:47.3625130Z Welcome to Gradle 8.10.2!
+2026-06-04T02:22:47.3625731Z 
+2026-06-04T02:22:47.3626098Z Here are the highlights of this release:
+2026-06-04T02:22:47.3639885Z  - Support for Java 23
+2026-06-04T02:22:47.3655329Z  - Faster configuration cache
+2026-06-04T02:22:47.3659942Z  - Better configuration cache reports
+2026-06-04T02:22:47.3660319Z 
+2026-06-04T02:22:47.3660702Z For more details see https://docs.gradle.org/8.10.2/release-notes.html
+2026-06-04T02:22:47.3661967Z 
+2026-06-04T02:22:47.6650759Z Starting a Gradle Daemon (subsequent builds will be faster)
+2026-06-04T02:24:41.2663710Z > Task :app:buildKotlinToolingMetadata
+2026-06-04T02:24:41.2700296Z > Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+2026-06-04T02:24:41.2730132Z > Task :app:preBuild UP-TO-DATE
+2026-06-04T02:24:41.2735073Z > Task :app:preReleaseBuild UP-TO-DATE
+2026-06-04T02:24:41.4613313Z > Task :app:generateReleaseBuildConfig
+2026-06-04T02:24:41.4629989Z > Task :app:protobufDummy UP-TO-DATE
+2026-06-04T02:25:11.4609947Z > Task :app:extractIncludeReleaseProto
+2026-06-04T02:25:39.0631797Z > Task :app:extractProto
+2026-06-04T02:25:39.0670065Z > Task :app:extractReleaseProto
+2026-06-04T02:25:39.6627834Z 
+2026-06-04T02:25:39.6670744Z > Task :app:generateReleaseProto
+2026-06-04T02:25:39.6710220Z protoc plugin 'java' not defined. Trying to use 'protoc-gen-java' from system path
+2026-06-04T02:25:40.7609115Z 
+2026-06-04T02:25:40.7614035Z > Task :app:generateReleaseResValues
+2026-06-04T02:25:40.7614952Z > Task :app:checkReleaseAarMetadata
+2026-06-04T02:25:41.3609667Z > Task :app:collectReleaseDependencies
+2026-06-04T02:25:41.6612570Z > Task :app:releaseOssDependencyTask
+2026-06-04T02:25:43.2620432Z 
+2026-06-04T02:25:43.2650611Z > Task :app:releaseOssLicensesTask
+2026-06-04T02:25:43.2680687Z Unable to find Google Play Services Artifact for com.google.firebase:firebase-bom:33.16.0
+2026-06-04T02:25:43.2741073Z Unable to find Google Play Services Artifact for com.google.android.gms:play-services-cloud-messaging:17.2.0
+2026-06-04T02:25:43.6620094Z 
+2026-06-04T02:25:43.6621035Z > Task :app:mapReleaseSourceSetPaths
+2026-06-04T02:25:43.6640060Z > Task :app:generateReleaseResources
+2026-06-04T02:25:46.4630469Z > Task :app:createReleaseCompatibleScreenManifests
+2026-06-04T02:25:46.4660083Z > Task :app:extractDeepLinksRelease
+2026-06-04T02:25:47.5618414Z > Task :app:mergeReleaseResources
+2026-06-04T02:25:48.1628365Z 
+2026-06-04T02:25:48.1630273Z > Task :app:processReleaseMainManifest
+2026-06-04T02:25:48.1632079Z package="com.google.ai.edge.gallery" found in source AndroidManifest.xml: /home/runner/work/apk-chinese-translation/apk-chinese-translation/Android/src/app/src/main/AndroidManifest.xml.
+2026-06-04T02:25:48.1634306Z Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+2026-06-04T02:25:48.1636687Z Recommendation: remove package="com.google.ai.edge.gallery" from the source AndroidManifest.xml: /home/runner/work/apk-chinese-translation/apk-chinese-translation/Android/src/app/src/main/AndroidManifest.xml.
+2026-06-04T02:25:48.1638252Z 
+2026-06-04T02:25:48.1638626Z > Task :app:packageReleaseResources
+2026-06-04T02:25:49.6639590Z > Task :app:processReleaseManifest
+2026-06-04T02:25:49.6674375Z > Task :app:parseReleaseLocalResources
+2026-06-04T02:25:53.8741893Z > Task :app:processReleaseManifestForPackage
+2026-06-04T02:25:53.8742949Z > Task :app:javaPreCompileRelease
+2026-06-04T02:25:55.0609028Z > Task :app:extractProguardFiles
+2026-06-04T02:25:55.1617123Z > Task :app:mergeReleaseJniLibFolders
+2026-06-04T02:25:56.5630545Z > Task :app:processReleaseResources
+2026-06-04T02:25:56.8609625Z > Task :app:mergeReleaseNativeLibs
+2026-06-04T02:26:07.0651474Z 
+2026-06-04T02:26:07.0688975Z > Task :app:stripReleaseDebugSymbols
+2026-06-04T02:26:07.0703221Z Unable to strip the following libraries, packaging them as they are: libLiteRt.so, libLiteRtClGlAccelerator.so, libandroidx.graphics.path.so, libdatastore_shared_counter.so, libimage_processing_util_jni.so, liblitertlm_jni.so, libsurface_util_jni.so, libtensorflowlite_jni_gms_client.so.
+2026-06-04T02:26:07.0740769Z 
+2026-06-04T02:26:07.0810125Z > Task :app:extractReleaseNativeSymbolTables
+2026-06-04T02:26:07.0830216Z > Task :app:mergeReleaseNativeDebugMetadata NO-SOURCE
+2026-06-04T02:26:14.1609759Z > Task :app:checkReleaseDuplicateClasses
+2026-06-04T02:26:14.1640024Z > Task :app:desugarReleaseFileDependencies
+2026-06-04T02:26:14.1680112Z > Task :app:mergeReleaseStartupProfile
+2026-06-04T02:26:26.5609030Z > Task :app:kspReleaseKotlin
+2026-06-04T02:26:44.1615093Z > Task :app:mergeExtDexRelease
+2026-06-04T02:29:23.4621033Z > Task :app:mergeReleaseArtProfile
+2026-06-04T02:29:23.4660287Z > Task :app:mergeReleaseShaders
+2026-06-04T02:29:23.4690084Z > Task :app:compileReleaseShaders NO-SOURCE
+2026-06-04T02:29:23.4693493Z > Task :app:generateReleaseAssets UP-TO-DATE
+2026-06-04T02:29:23.9610301Z > Task :app:mergeReleaseAssets
+2026-06-04T02:29:24.2630594Z > Task :app:compressReleaseAssets
+2026-06-04T02:29:24.4630710Z > Task :app:extractReleaseVersionControlInfo
+2026-06-04T02:29:25.3609549Z > Task :app:optimizeReleaseResources
+2026-06-04T02:29:25.5620562Z > Task :app:sdkReleaseDependencyData
+2026-06-04T02:29:27.6660568Z > Task :app:validateSigningRelease
+2026-06-04T02:29:27.6727738Z > Task :app:writeReleaseAppMetadata
+2026-06-04T02:29:27.7610508Z > Task :app:writeReleaseSigningConfigVersions
+2026-06-04T02:29:27.7650128Z > Task :app:kaptGenerateStubsReleaseKotlin
+2026-06-04T02:30:12.9610525Z w: Experimental context receivers are superseded by context parameters.
+2026-06-04T02:30:12.9619723Z Replace the '-Xcontext-receivers' compiler argument with '-Xcontext-parameters' and migrate to the new syntax.
+2026-06-04T02:30:12.9637480Z 
+2026-06-04T02:30:12.9656878Z See the context parameters proposal for more details: https://kotl.in/context-parameters
+2026-06-04T02:30:12.9678489Z This warning will become an error in future releases.
+2026-06-04T02:30:22.1611769Z 
+2026-06-04T02:30:22.1650333Z > Task :app:kaptReleaseKotlin
+2026-06-04T02:30:39.9616876Z e: file:///home/runner/work/apk-chinese-translation/apk-chinese-translation/Android/src/app/src/main/java/com/google/ai/edge/gallery/ui/common/chat/MessageInputText.kt:109:45 Unresolved reference 'detectLongPress'.
+2026-06-04T02:30:39.9618328Z 
+2026-06-04T02:30:39.9651073Z e: file:///home/runner/work/apk-chinese-translation/apk-chinese-translation/Android/src/app/src/main/java/com/google/ai/edge/gallery/ui/common/chat/MessageInputText.kt:112:42 Unresolved reference 'pressTimeoutMillis'.
+2026-06-04T02:30:39.9652742Z > Task :app:compileReleaseKotlin FAILED
+2026-06-04T02:30:39.9671119Z e: file:///home/runner/work/apk-chinese-translation/apk-chinese-translation/Android/src/app/src/main/java/com/google/ai/edge/gallery/ui/common/chat/MessageInputText.kt:113:42 Unresolved reference 'waitForUpOrCancellation'.
+2026-06-04T02:30:39.9690943Z e: file:///home/runner/work/apk-chinese-translation/apk-chinese-translation/Android/src/app/src/main/java/com/google/ai/edge/gallery/ui/common/chat/MessageInputText.kt:407:25 Unresolved reference 'detectLongPress'.
+2026-06-04T02:30:39.9700303Z e: file:///home/runner/work/apk-chinese-translation/apk-chinese-translation/Android/src/app/src/main/java/com/google/ai/edge/gallery/ui/home/HomeScreen.kt:181:60 Unresolved reference 'tasksByCategories'.
+2026-06-04T02:30:39.9731041Z e: file:///home/runner/work/apk-chinese-translation/apk-chinese-translation/Android/src/app/src/main/java/com/google/ai/edge/gallery/ui/home/HomeScreen.kt:181:78 Cannot infer type for this parameter. Specify it explicitly.
+2026-06-04T02:30:39.9889064Z e: file:///home/runner/work/apk-chinese-translation/apk-chinese-translation/Android/src/app/src/main/java/com/google/ai/edge/gallery/ui/home/HomeScreen.kt:182:26 Unresolved reference 'it'.
+2026-06-04T02:30:40.0914477Z 
+2026-06-04T02:30:40.0914996Z 46 actionable tasks: 46 executed
+2026-06-04T02:30:40.0926638Z FAILURE: Build failed with an exception.
+2026-06-04T02:30:40.1244470Z 
+2026-06-04T02:30:40.1250280Z * What went wrong:
+2026-06-04T02:30:40.1440941Z Execution failed for task ':app:compileReleaseKotlin'.
+2026-06-04T02:30:40.1641821Z > A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+2026-06-04T02:30:40.1838727Z    > Compilation error. See log for more details
+2026-06-04T02:30:40.1839108Z 
+2026-06-04T02:30:40.1839225Z * Try:
+2026-06-04T02:30:40.1839840Z > Run with --info or --debug option to get more log output.
+2026-06-04T02:30:40.1840369Z > Run with --scan to get full insights.
+2026-06-04T02:30:40.1840837Z > Get more help at https://help.gradle.org.
+2026-06-04T02:30:40.1841152Z 
+2026-06-04T02:30:40.1841271Z * Exception is:
+2026-06-04T02:30:40.1841948Z org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':app:compileReleaseKotlin'.
+2026-06-04T02:30:40.1860222Z 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:130)
+2026-06-04T02:30:40.1861603Z 	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:293)
+2026-06-04T02:30:40.1862802Z 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:128)
+2026-06-04T02:30:40.1864380Z 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:116)
+2026-06-04T02:30:40.1865931Z 	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
+2026-06-04T02:30:40.1867569Z 	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
+2026-06-04T02:30:40.1869174Z 	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
+2026-06-04T02:30:40.1870922Z 	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
+2026-06-04T02:30:40.1872871Z 	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
+2026-06-04T02:30:40.1874341Z 	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
+2026-06-04T02:30:40.1875668Z 	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
+2026-06-04T02:30:40.1876966Z 	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
+2026-06-04T02:30:40.1878489Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:209)
+2026-06-04T02:30:40.1880379Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
+2026-06-04T02:30:40.1881791Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+2026-06-04T02:30:40.1883047Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+2026-06-04T02:30:40.1884279Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:166)
+2026-06-04T02:30:40.1885877Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+2026-06-04T02:30:40.1887094Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
+2026-06-04T02:30:40.1888345Z 	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
+2026-06-04T02:30:40.1902282Z 	at org.gradle.execution.plan.LocalTaskNodeExecutor.execute(LocalTaskNodeExecutor.java:42)
+2026-06-04T02:30:40.1903880Z 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:331)
+2026-06-04T02:30:40.1905576Z 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:318)
+2026-06-04T02:30:40.1907374Z 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:314)
+2026-06-04T02:30:40.1909018Z 	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:85)
+2026-06-04T02:30:40.1910738Z 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:314)
+2026-06-04T02:30:40.1912501Z 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
+2026-06-04T02:30:40.1913974Z 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
+2026-06-04T02:30:40.1915120Z 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
+2026-06-04T02:30:40.1916219Z 	at org.gradle.execution.plan.DefaultPlanExecutor.process(DefaultPlanExecutor.java:111)
+2026-06-04T02:30:40.1917473Z 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.executeWithServices(DefaultTaskExecutionGraph.java:138)
+2026-06-04T02:30:40.1918856Z 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.execute(DefaultTaskExecutionGraph.java:123)
+2026-06-04T02:30:40.1920246Z 	at org.gradle.execution.SelectedTaskExecutionAction.execute(SelectedTaskExecutionAction.java:35)
+2026-06-04T02:30:40.1921460Z 	at org.gradle.execution.DryRunBuildExecutionAction.execute(DryRunBuildExecutionAction.java:51)
+2026-06-04T02:30:40.1922916Z 	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:54)
+2026-06-04T02:30:40.1924499Z 	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:43)
+2026-06-04T02:30:40.1926388Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:209)
+2026-06-04T02:30:40.1928006Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
+2026-06-04T02:30:40.1929559Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+2026-06-04T02:30:40.1930801Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+2026-06-04T02:30:40.1932085Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:166)
+2026-06-04T02:30:40.1933327Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+2026-06-04T02:30:40.1934546Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
+2026-06-04T02:30:40.1935895Z 	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor.execute(BuildOperationFiringBuildWorkerExecutor.java:40)
+2026-06-04T02:30:40.1937347Z 	at org.gradle.internal.build.DefaultBuildLifecycleController.lambda$executeTasks$10(DefaultBuildLifecycleController.java:313)
+2026-06-04T02:30:40.1938868Z 	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:266)
+2026-06-04T02:30:40.1940308Z 	at org.gradle.internal.model.StateTransitionController.lambda$tryTransition$8(StateTransitionController.java:177)
+2026-06-04T02:30:40.1941456Z 	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:44)
+2026-06-04T02:30:40.1942587Z 	at org.gradle.internal.model.StateTransitionController.tryTransition(StateTransitionController.java:177)
+2026-06-04T02:30:40.1943952Z 	at org.gradle.internal.build.DefaultBuildLifecycleController.executeTasks(DefaultBuildLifecycleController.java:304)
+2026-06-04T02:30:40.1945566Z 	at org.gradle.internal.build.DefaultBuildWorkGraphController$DefaultBuildWorkGraph.runWork(DefaultBuildWorkGraphController.java:220)
+2026-06-04T02:30:40.1947066Z 	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:263)
+2026-06-04T02:30:40.1948380Z 	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:127)
+2026-06-04T02:30:40.1949842Z 	at org.gradle.composite.internal.DefaultBuildController.doRun(DefaultBuildController.java:181)
+2026-06-04T02:30:40.1951019Z 	at org.gradle.composite.internal.DefaultBuildController.access$000(DefaultBuildController.java:50)
+2026-06-04T02:30:40.1952322Z 	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.lambda$run$0(DefaultBuildController.java:198)
+2026-06-04T02:30:40.1953583Z 	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:85)
+2026-06-04T02:30:40.1954891Z 	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.run(DefaultBuildController.java:198)
+2026-06-04T02:30:40.1956221Z 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+2026-06-04T02:30:40.1957272Z 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
+2026-06-04T02:30:40.1959044Z Caused by: org.gradle.workers.internal.DefaultWorkerExecutor$WorkExecutionException: A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+2026-06-04T02:30:40.1961263Z 	at org.gradle.workers.internal.DefaultWorkerExecutor$WorkItemExecution.waitForCompletion(DefaultWorkerExecutor.java:287)
+2026-06-04T02:30:40.1962659Z 	at org.gradle.internal.work.DefaultAsyncWorkTracker.lambda$waitForItemsAndGatherFailures$2(DefaultAsyncWorkTracker.java:130)
+2026-06-04T02:30:40.1963739Z 	at org.gradle.internal.Factories$1.create(Factories.java:31)
+2026-06-04T02:30:40.1964692Z 	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLocks(DefaultWorkerLeaseService.java:335)
+2026-06-04T02:30:40.1966194Z 	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLocks(DefaultWorkerLeaseService.java:318)
+2026-06-04T02:30:40.1967409Z 	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLock(DefaultWorkerLeaseService.java:323)
+2026-06-04T02:30:40.1968759Z 	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForItemsAndGatherFailures(DefaultAsyncWorkTracker.java:126)
+2026-06-04T02:30:40.1970338Z 	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForItemsAndGatherFailures(DefaultAsyncWorkTracker.java:92)
+2026-06-04T02:30:40.1971471Z 	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForAll(DefaultAsyncWorkTracker.java:78)
+2026-06-04T02:30:40.1972460Z 	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForCompletion(DefaultAsyncWorkTracker.java:66)
+2026-06-04T02:30:40.1973372Z 	at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:252)
+2026-06-04T02:30:40.1974537Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:29)
+2026-06-04T02:30:40.1975861Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:26)
+2026-06-04T02:30:40.1977038Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+2026-06-04T02:30:40.1978287Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+2026-06-04T02:30:40.1979582Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:166)
+2026-06-04T02:30:40.1981003Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+2026-06-04T02:30:40.1982398Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:47)
+2026-06-04T02:30:40.1983625Z 	at org.gradle.api.internal.tasks.execution.TaskExecution.executeAction(TaskExecution.java:229)
+2026-06-04T02:30:40.1984751Z 	at org.gradle.api.internal.tasks.execution.TaskExecution.executeActions(TaskExecution.java:212)
+2026-06-04T02:30:40.1986034Z 	at org.gradle.api.internal.tasks.execution.TaskExecution.executeWithPreviousOutputFiles(TaskExecution.java:195)
+2026-06-04T02:30:40.1987288Z 	at org.gradle.api.internal.tasks.execution.TaskExecution.execute(TaskExecution.java:162)
+2026-06-04T02:30:40.1988355Z 	at org.gradle.internal.execution.steps.ExecuteStep.executeInternal(ExecuteStep.java:105)
+2026-06-04T02:30:40.1989543Z 	at org.gradle.internal.execution.steps.ExecuteStep.access$000(ExecuteStep.java:44)
+2026-06-04T02:30:40.1990456Z 	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:59)
+2026-06-04T02:30:40.1991292Z 	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:56)
+2026-06-04T02:30:40.1992541Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:209)
+2026-06-04T02:30:40.1994210Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
+2026-06-04T02:30:40.1995668Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+2026-06-04T02:30:40.1996947Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+2026-06-04T02:30:40.1998239Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:166)
+2026-06-04T02:30:40.1999664Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+2026-06-04T02:30:40.2000937Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
+2026-06-04T02:30:40.2002005Z 	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:56)
+2026-06-04T02:30:40.2002872Z 	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:44)
+2026-06-04T02:30:40.2004079Z 	at org.gradle.internal.execution.steps.CancelExecutionStep.execute(CancelExecutionStep.java:42)
+2026-06-04T02:30:40.2005166Z 	at org.gradle.internal.execution.steps.TimeoutStep.executeWithoutTimeout(TimeoutStep.java:75)
+2026-06-04T02:30:40.2006099Z 	at org.gradle.internal.execution.steps.TimeoutStep.execute(TimeoutStep.java:55)
+2026-06-04T02:30:40.2007133Z 	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:50)
+2026-06-04T02:30:40.2008354Z 	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:28)
+2026-06-04T02:30:40.2009709Z 	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.execute(RemovePreviousOutputsStep.java:67)
+2026-06-04T02:30:40.2010971Z 	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.execute(RemovePreviousOutputsStep.java:37)
+2026-06-04T02:30:40.2012365Z 	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:61)
+2026-06-04T02:30:40.2013713Z 	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:26)
+2026-06-04T02:30:40.2015335Z 	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:69)
+2026-06-04T02:30:40.2017053Z 	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:46)
+2026-06-04T02:30:40.2018510Z 	at org.gradle.internal.execution.steps.ResolveInputChangesStep.execute(ResolveInputChangesStep.java:40)
+2026-06-04T02:30:40.2019996Z 	at org.gradle.internal.execution.steps.ResolveInputChangesStep.execute(ResolveInputChangesStep.java:29)
+2026-06-04T02:30:40.2021367Z 	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithoutCache(BuildCacheStep.java:189)
+2026-06-04T02:30:40.2022488Z 	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$execute$1(BuildCacheStep.java:75)
+2026-06-04T02:30:40.2023300Z 	at org.gradle.internal.Either$Right.fold(Either.java:175)
+2026-06-04T02:30:40.2023986Z 	at org.gradle.internal.execution.caching.CachingState.fold(CachingState.java:62)
+2026-06-04T02:30:40.2024860Z 	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:73)
+2026-06-04T02:30:40.2025766Z 	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:48)
+2026-06-04T02:30:40.2026811Z 	at org.gradle.internal.execution.steps.StoreExecutionStateStep.execute(StoreExecutionStateStep.java:46)
+2026-06-04T02:30:40.2028007Z 	at org.gradle.internal.execution.steps.StoreExecutionStateStep.execute(StoreExecutionStateStep.java:35)
+2026-06-04T02:30:40.2029138Z 	at org.gradle.internal.execution.steps.SkipUpToDateStep.executeBecause(SkipUpToDateStep.java:75)
+2026-06-04T02:30:40.2030352Z 	at org.gradle.internal.execution.steps.SkipUpToDateStep.lambda$execute$2(SkipUpToDateStep.java:53)
+2026-06-04T02:30:40.2031348Z 	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:53)
+2026-06-04T02:30:40.2032348Z 	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:35)
+2026-06-04T02:30:40.2033631Z 	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:37)
+2026-06-04T02:30:40.2035253Z 	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:27)
+2026-06-04T02:30:40.2036794Z 	at org.gradle.internal.execution.steps.ResolveIncrementalCachingStateStep.executeDelegate(ResolveIncrementalCachingStateStep.java:49)
+2026-06-04T02:30:40.2038432Z 	at org.gradle.internal.execution.steps.ResolveIncrementalCachingStateStep.executeDelegate(ResolveIncrementalCachingStateStep.java:27)
+2026-06-04T02:30:40.2106675Z 	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:71)
+2026-06-04T02:30:40.2108544Z 	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:39)
+2026-06-04T02:30:40.2110099Z 	at org.gradle.internal.execution.steps.ResolveChangesStep.execute(ResolveChangesStep.java:65)
+2026-06-04T02:30:40.2118058Z 	at org.gradle.internal.execution.steps.ResolveChangesStep.execute(ResolveChangesStep.java:36)
+2026-06-04T02:30:40.2119134Z 	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:107)
+2026-06-04T02:30:40.2120548Z 	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:56)
+2026-06-04T02:30:40.2121924Z 	at org.gradle.internal.execution.steps.AbstractCaptureStateBeforeExecutionStep.execute(AbstractCaptureStateBeforeExecutionStep.java:64)
+2026-06-04T02:30:40.2123794Z 	at org.gradle.internal.execution.steps.AbstractCaptureStateBeforeExecutionStep.execute(AbstractCaptureStateBeforeExecutionStep.java:43)
+2026-06-04T02:30:40.2125567Z 	at org.gradle.internal.execution.steps.AbstractSkipEmptyWorkStep.executeWithNonEmptySources(AbstractSkipEmptyWorkStep.java:125)
+2026-06-04T02:30:40.2127124Z 	at org.gradle.internal.execution.steps.AbstractSkipEmptyWorkStep.execute(AbstractSkipEmptyWorkStep.java:61)
+2026-06-04T02:30:40.2128512Z 	at org.gradle.internal.execution.steps.AbstractSkipEmptyWorkStep.execute(AbstractSkipEmptyWorkStep.java:36)
+2026-06-04T02:30:40.2157799Z 	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:38)
+2026-06-04T02:30:40.2159754Z 	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.execute(LoadPreviousExecutionStateStep.java:36)
+2026-06-04T02:30:40.2161280Z 	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.execute(LoadPreviousExecutionStateStep.java:23)
+2026-06-04T02:30:40.2162662Z 	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.execute(HandleStaleOutputsStep.java:75)
+2026-06-04T02:30:40.2163898Z 	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.execute(HandleStaleOutputsStep.java:41)
+2026-06-04T02:30:40.2165264Z 	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.lambda$execute$0(AssignMutableWorkspaceStep.java:35)
+2026-06-04T02:30:40.2166412Z 	at org.gradle.api.internal.tasks.execution.TaskExecution$4.withWorkspace(TaskExecution.java:289)
+2026-06-04T02:30:40.2167506Z 	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.execute(AssignMutableWorkspaceStep.java:31)
+2026-06-04T02:30:40.2168694Z 	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.execute(AssignMutableWorkspaceStep.java:22)
+2026-06-04T02:30:40.2190285Z 	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:40)
+2026-06-04T02:30:40.2191481Z 	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:23)
+2026-06-04T02:30:40.2192959Z 	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.lambda$execute$2(ExecuteWorkBuildOperationFiringStep.java:67)
+2026-06-04T02:30:40.2194712Z 	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:67)
+2026-06-04T02:30:40.2196383Z 	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:39)
+2026-06-04T02:30:40.2209904Z 	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:46)
+2026-06-04T02:30:40.2211119Z 	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:34)
+2026-06-04T02:30:40.2212217Z 	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:48)
+2026-06-04T02:30:40.2213170Z 	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:35)
+2026-06-04T02:30:40.2214221Z 	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:61)
+2026-06-04T02:30:40.2215656Z 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:127)
+2026-06-04T02:30:40.2217443Z 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:116)
+2026-06-04T02:30:40.2218896Z 	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
+2026-06-04T02:30:40.2220660Z 	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
+2026-06-04T02:30:40.2222098Z 	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
+2026-06-04T02:30:40.2223047Z 	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
+2026-06-04T02:30:40.2223857Z 	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
+2026-06-04T02:30:40.2224990Z 	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
+2026-06-04T02:30:40.2226214Z 	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
+2026-06-04T02:30:40.2227462Z 	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
+2026-06-04T02:30:40.2229791Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:209)
+2026-06-04T02:30:40.2231598Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
+2026-06-04T02:30:40.2233203Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+2026-06-04T02:30:40.2234565Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+2026-06-04T02:30:40.2235977Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:166)
+2026-06-04T02:30:40.2237353Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+2026-06-04T02:30:40.2238730Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
+2026-06-04T02:30:40.2240241Z 	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
+2026-06-04T02:30:40.2241376Z 	at org.gradle.execution.plan.LocalTaskNodeExecutor.execute(LocalTaskNodeExecutor.java:42)
+2026-06-04T02:30:40.2242659Z 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:331)
+2026-06-04T02:30:40.2247764Z 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:318)
+2026-06-04T02:30:40.2249251Z 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:314)
+2026-06-04T02:30:40.2250906Z 	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:85)
+2026-06-04T02:30:40.2252164Z 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:314)
+2026-06-04T02:30:40.2253628Z 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
+2026-06-04T02:30:40.2254845Z 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
+2026-06-04T02:30:40.2255833Z 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
+2026-06-04T02:30:40.2256719Z 	at org.gradle.execution.plan.DefaultPlanExecutor.process(DefaultPlanExecutor.java:111)
+2026-06-04T02:30:40.2257753Z 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.executeWithServices(DefaultTaskExecutionGraph.java:138)
+2026-06-04T02:30:40.2259588Z 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.execute(DefaultTaskExecutionGraph.java:123)
+2026-06-04T02:30:40.2260917Z 	at org.gradle.execution.SelectedTaskExecutionAction.execute(SelectedTaskExecutionAction.java:35)
+2026-06-04T02:30:40.2262146Z 	at org.gradle.execution.DryRunBuildExecutionAction.execute(DryRunBuildExecutionAction.java:51)
+2026-06-04T02:30:40.2263667Z 	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:54)
+2026-06-04T02:30:40.2265413Z 	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:43)
+2026-06-04T02:30:40.2267219Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:209)
+2026-06-04T02:30:40.2269048Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
+2026-06-04T02:30:40.2271052Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+2026-06-04T02:30:40.2272665Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+2026-06-04T02:30:40.2274249Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:166)
+2026-06-04T02:30:40.2275658Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+2026-06-04T02:30:40.2276992Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
+2026-06-04T02:30:40.2278438Z 	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor.execute(BuildOperationFiringBuildWorkerExecutor.java:40)
+2026-06-04T02:30:40.2280152Z 	at org.gradle.internal.build.DefaultBuildLifecycleController.lambda$executeTasks$10(DefaultBuildLifecycleController.java:313)
+2026-06-04T02:30:40.2281325Z 	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:266)
+2026-06-04T02:30:40.2282399Z 	at org.gradle.internal.model.StateTransitionController.lambda$tryTransition$8(StateTransitionController.java:177)
+2026-06-04T02:30:40.2283371Z 	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:44)
+2026-06-04T02:30:40.2284323Z 	at org.gradle.internal.model.StateTransitionController.tryTransition(StateTransitionController.java:177)
+2026-06-04T02:30:40.2285560Z 	at org.gradle.internal.build.DefaultBuildLifecycleController.executeTasks(DefaultBuildLifecycleController.java:304)
+2026-06-04T02:30:40.2286836Z 	at org.gradle.internal.build.DefaultBuildWorkGraphController$DefaultBuildWorkGraph.runWork(DefaultBuildWorkGraphController.java:220)
+2026-06-04T02:30:40.2288012Z 	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:263)
+2026-06-04T02:30:40.2289060Z 	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:127)
+2026-06-04T02:30:40.2290265Z 	at org.gradle.composite.internal.DefaultBuildController.doRun(DefaultBuildController.java:181)
+2026-06-04T02:30:40.2291234Z 	at org.gradle.composite.internal.DefaultBuildController.access$000(DefaultBuildController.java:50)
+2026-06-04T02:30:40.2292303Z 	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.lambda$run$0(DefaultBuildController.java:198)
+2026-06-04T02:30:40.2293376Z 	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:85)
+2026-06-04T02:30:40.2294387Z 	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.run(DefaultBuildController.java:198)
+2026-06-04T02:30:40.2295424Z 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+2026-06-04T02:30:40.2296399Z 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
+2026-06-04T02:30:40.2297631Z Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilation error. See log for more details
+2026-06-04T02:30:40.2298725Z 	at org.jetbrains.kotlin.gradle.tasks.TasksUtilsKt.throwExceptionIfCompilationFailed(tasksUtils.kt:21)
+2026-06-04T02:30:40.2300004Z 	at org.jetbrains.kotlin.compilerRunner.GradleKotlinCompilerWork.run(GradleKotlinCompilerWork.kt:119)
+2026-06-04T02:30:40.2301855Z 	at org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction.execute(GradleCompilerRunnerWithWorkers.kt:74)
+2026-06-04T02:30:40.2303356Z 	at org.gradle.workers.internal.DefaultWorkerServer.execute(DefaultWorkerServer.java:63)
+2026-06-04T02:30:40.2304534Z 	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:66)
+2026-06-04T02:30:40.2305732Z 	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:62)
+2026-06-04T02:30:40.2306983Z 	at org.gradle.internal.classloader.ClassLoaderUtils.executeInClassloader(ClassLoaderUtils.java:100)
+2026-06-04T02:30:40.2308269Z 	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.lambda$execute$0(NoIsolationWorkerFactory.java:62)
+2026-06-04T02:30:40.2309515Z 	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:44)
+2026-06-04T02:30:40.2310576Z 	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:41)
+2026-06-04T02:30:40.2311916Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:209)
+2026-06-04T02:30:40.2313692Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
+2026-06-04T02:30:40.2315254Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+2026-06-04T02:30:40.2316609Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+2026-06-04T02:30:40.2317963Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:166)
+2026-06-04T02:30:40.2319324Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+2026-06-04T02:30:40.2320592Z 	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
+2026-06-04T02:30:40.2321686Z 	at org.gradle.workers.internal.AbstractWorker.executeWrappedInBuildOperation(AbstractWorker.java:41)
+2026-06-04T02:30:40.2322791Z 	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.execute(NoIsolationWorkerFactory.java:59)
+2026-06-04T02:30:40.2323921Z 	at org.gradle.workers.internal.DefaultWorkerExecutor.lambda$submitWork$0(DefaultWorkerExecutor.java:174)
+2026-06-04T02:30:40.2325267Z 	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runExecution(DefaultConditionalExecutionQueue.java:194)
+2026-06-04T02:30:40.2326840Z 	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.access$700(DefaultConditionalExecutionQueue.java:127)
+2026-06-04T02:30:40.2328307Z 	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner$1.run(DefaultConditionalExecutionQueue.java:169)
+2026-06-04T02:30:40.2329343Z 	at org.gradle.internal.Factories$1.create(Factories.java:31)
+2026-06-04T02:30:40.2330513Z 	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:263)
+2026-06-04T02:30:40.2331826Z 	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:127)
+2026-06-04T02:30:40.2333149Z 	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:132)
+2026-06-04T02:30:40.2334662Z 	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runBatch(DefaultConditionalExecutionQueue.java:164)
+2026-06-04T02:30:40.2336246Z 	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.run(DefaultConditionalExecutionQueue.java:133)
+2026-06-04T02:30:40.2337538Z 	... 2 more
+2026-06-04T02:30:40.2337707Z 
+2026-06-04T02:30:40.2337713Z 
+2026-06-04T02:30:40.2337857Z BUILD FAILED in 7m 58s
+2026-06-04T02:30:40.7458520Z ##[error]Process completed with exit code 1.
+2026-06-04T02:30:40.7593232Z Post job cleanup.
+2026-06-04T02:30:40.9516930Z Post job cleanup.
+2026-06-04T02:30:41.0704903Z [command]/usr/bin/git version
+2026-06-04T02:30:41.0780228Z git version 2.54.0
+2026-06-04T02:30:41.0852185Z Temporarily overriding HOME='/home/runner/work/_temp/60f078b9-f6f6-4627-8e10-6ef97d8e4916' before making global git config changes
+2026-06-04T02:30:41.0853671Z Adding repository directory to the temporary git global config as a safe directory
+2026-06-04T02:30:41.0855041Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/apk-chinese-translation/apk-chinese-translation
+2026-06-04T02:30:41.0910353Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-06-04T02:30:41.0961579Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-06-04T02:30:41.1370702Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-06-04T02:30:41.1410023Z http.https://github.com/.extraheader
+2026-06-04T02:30:41.1470280Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-06-04T02:30:41.1521479Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-06-04T02:30:41.1981453Z Cleaning up orphan processes
+2026-06-04T02:30:41.2313326Z Terminate orphan process: pid (2067) (java)
+2026-06-04T02:30:41.2359038Z Terminate orphan process: pid (2261) (java)
+2026-06-04T02:30:41.2393263Z ##[warning]Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v3, actions/setup-java@v4. Actions will be forced to run with Node.js 24 by default starting June 16th, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

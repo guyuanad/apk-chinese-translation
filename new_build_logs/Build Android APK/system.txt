@@ -1,0 +1,8 @@
+2026-06-04T03:13:07.1770000Z Evaluating build_apk.if
+2026-06-04T03:13:07.1770000Z Evaluating: success()
+2026-06-04T03:13:07.1770000Z Result: true
+2026-06-04T03:13:07.1770000Z Requested labels: ubuntu-latest
+2026-06-04T03:13:07.1770000Z Job defined at: wenyuxiang123/apk-chinese-translation/.github/workflows/build_android.yaml@refs/heads/main
+2026-06-04T03:13:07.1770000Z Waiting for a runner to pick up this job...
+2026-06-04T03:13:07.6920000Z Job is about to start running on the hosted runner: GitHub Actions 1000001473
+2026-06-04T03:13:07.6920000Z Job is waiting for a hosted runner to come online.
