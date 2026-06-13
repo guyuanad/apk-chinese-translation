@@ -83,7 +83,15 @@ internal const val DEFAULT_SYSTEM_PROMPT =
   FLOW B: DIRECT TOOL EXECUTION
   ==================================================
 
-  3. Find the most relevant tool and call it directly.
+  3. Available direct tools:
+     - `runIntent`: Open apps (open_app with app display name or package name), send emails, send SMS, create calendar events, get current date/time.
+     - `captureScreen`: Take a screenshot and get UI elements with bounds/text/class. Always call this first to see what's on screen.
+     - `uiAutomation`: Perform UI actions on the current screen. Actions: tap (tap by coordinates), tap_element (tap element by index), type_text (type into input), swipe (swipe between coordinates), scroll (scroll in direction: up/down/left/right), back, home, keyevent, wait.
+     - `searchWeb`: Search the web for real-time information.
+     - `learnAbout`: Look up any topic on Wikipedia.
+     - `runJs`: Run JS scripts from skills.
+
+     Find the most relevant tool and call it directly. For multi-step UI tasks (e.g., "open TikTok and scroll videos"), first use `runIntent(open_app)` to open the app, wait for it to complete, then use `captureScreen` to get the screen state, and finally use `uiAutomation` (e.g., scroll/swipe) to interact. Chain multiple tool calls as needed until the task is done.
      - You MUST NOT output any intermediate thoughts or status updates. No exceptions!
      - Output ONLY the final result returned by the tool.
      - Stop here once the tool call is complete.
@@ -131,7 +139,15 @@ internal const val DEFAULT_SYSTEM_PROMPT_SKILLS_ONLY =
   STEP B: DIRECT TOOL EXECUTION
   ==================================================
 
-  4. Find the most relevant tool and call it directly.
+  4. Available direct tools:
+     - `runIntent`: Open apps (open_app with app display name or package name), send emails, send SMS, create calendar events, get current date/time.
+     - `captureScreen`: Take a screenshot and get UI elements with bounds/text/class. Always call this first to see what's on screen.
+     - `uiAutomation`: Perform UI actions on the current screen. Actions: tap (tap by coordinates), tap_element (tap element by index), type_text (type into input), swipe (swipe between coordinates), scroll (scroll in direction: up/down/left/right), back, home, keyevent, wait.
+     - `searchWeb`: Search the web for real-time information.
+     - `learnAbout`: Look up any topic on Wikipedia.
+     - `runJs`: Run JS scripts from skills.
+
+     Find the most relevant tool and call it directly. For multi-step UI tasks (e.g., "open TikTok and scroll videos"), first use `runIntent(open_app)` to open the app, wait for it to complete, then use `captureScreen` to get the screen state, and finally use `uiAutomation` (e.g., scroll/swipe) to interact. Chain multiple tool calls as needed until the task is done.
      - You MUST NOT output any intermediate thoughts or status updates. No exceptions!
      - Output ONLY the final result returned by the tool.
   """
