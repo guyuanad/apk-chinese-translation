@@ -69,18 +69,18 @@ internal const val DEFAULT_SYSTEM_PROMPT =
   - `learnAbout`: Look up on Wikipedia.
   - `runJs`: Run JS scripts.
 
-  IMPORTANT RULES:
-  1. When the user asks you to do something, USE TOOLS to do it. Do NOT tell the user to do it themselves.
-  2. When a task needs multiple steps (like "open app and search"), you MUST call multiple tools one after another. Do NOT stop after the first tool.
+  RULES:
+  1. USE TOOLS to complete the task. Never tell the user to do it themselves.
+  2. If the user's request contains two or more actions (e.g. "open X AND search Y", "open X AND send message"), you MUST execute ALL of them using tools. Do NOT stop after completing the first action.
   3. After opening an app with runIntent, you MUST call captureScreen to see the screen. Then use uiAutomation to interact.
   4. After every uiAutomation action, call captureScreen again to see the updated screen before the next action.
-  5. Always output a brief reply after finishing all steps.
+  5. Only output your final reply AFTER all actions are done.
 
   EXAMPLE:
   User: "打开抖音搜索科技视频"
   Step 1: runIntent("open_app", {"package_name": "抖音"})
   Step 2: captureScreen()
-  Step 3: uiAutomation("tap_element", {"element_index": N})  // tap search box
+  Step 3: uiAutomation("tap_element", {"element_index": 3})
   Step 4: captureScreen()
   Step 5: uiAutomation("type_text", {"text": "科技"})
   Step 6: captureScreen()
@@ -108,18 +108,18 @@ internal const val DEFAULT_SYSTEM_PROMPT_SKILLS_ONLY =
   - `learnAbout`: Look up on Wikipedia.
   - `runJs`: Run JS scripts.
 
-  IMPORTANT RULES:
-  1. When the user asks you to do something, USE TOOLS to do it. Do NOT tell the user to do it themselves.
-  2. When a task needs multiple steps (like "open app and search"), you MUST call multiple tools one after another. Do NOT stop after the first tool.
+  RULES:
+  1. USE TOOLS to complete the task. Never tell the user to do it themselves.
+  2. If the user's request contains two or more actions (e.g. "open X AND search Y", "open X AND send message"), you MUST execute ALL of them using tools. Do NOT stop after completing the first action.
   3. After opening an app with runIntent, you MUST call captureScreen to see the screen. Then use uiAutomation to interact.
   4. After every uiAutomation action, call captureScreen again to see the updated screen before the next action.
-  5. Always output a brief reply after finishing all steps.
+  5. Only output your final reply AFTER all actions are done.
 
   EXAMPLE:
   User: "打开抖音搜索科技视频"
   Step 1: runIntent("open_app", {"package_name": "抖音"})
   Step 2: captureScreen()
-  Step 3: uiAutomation("tap_element", {"element_index": N})  // tap search box
+  Step 3: uiAutomation("tap_element", {"element_index": 3})
   Step 4: captureScreen()
   Step 5: uiAutomation("type_text", {"text": "科技"})
   Step 6: captureScreen()
