@@ -157,6 +157,7 @@ open class AgentTools(
 
   private val callCounts = ConcurrentHashMap<String, AtomicInteger>()
   private val maxCallsPerTool = 10
+  private var lastCaptureScreenTime: Long = 0  // Track when captureScreen was last called
 
   private val _actionChannel = Channel<AgentAction>(Channel.UNLIMITED)
   val actionChannel: ReceiveChannel<AgentAction> = _actionChannel
@@ -736,7 +737,11 @@ open class AgentTools(
         return@runBlocking mapOf("error" to "Too many calls to captureScreen", "status" to "blocked")
       }
       withToolLogging("captureScreen") {
-        UiAutomationTools.captureScreen(context)
+        val result = UiAutomationTools.captureScreen(context)
+        if (result["status"] == "success") {
+          lastCaptureScreenTime = System.currentTimeMillis()
+        }
+        result
       }
     }
   }
@@ -760,10 +765,20 @@ open class AgentTools(
       if (!checkCallLimit("uiAutomation")) {
         return@runBlocking mapOf("error" to "Too many calls to uiAutomation", "status" to "blocked")
       }
+      // Force captureScreen before uiAutomation
+      if (lastCaptureScreenTime == 0L) {
+        return@runBlocking mapOf(
+          "status" to "error",
+          "action" to action,
+          "message" to "You MUST call captureScreen() first before using uiAutomation. Call captureScreen() now to see the screen elements."
+        )
+      }
       withToolLogging("uiAutomation") {
         val result = UiAutomationTools.executeUiAction(context, action, parameters)
         // Guide the model to capture screen after UI action
         if (result["status"] == "success") {
+          // Invalidate captureScreen time so model must call it again before next uiAutomation
+          lastCaptureScreenTime = 0L
           result + ("hint" to "Action completed. Call captureScreen() to see the updated screen before the next action.")
         } else {
           result
