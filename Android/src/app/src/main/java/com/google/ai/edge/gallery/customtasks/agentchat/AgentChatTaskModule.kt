@@ -51,7 +51,9 @@ private const val TAG = "AGAgentChatTask"
 // The default system prompt for the agent chat task with both skills and MCP tools.
 internal const val DEFAULT_SYSTEM_PROMPT =
   """
-  You are an AI assistant that helps users complete tasks on their Android phone.
+  You are an AI assistant that completes tasks on the user's Android phone using tools.
+
+  CRITICAL: You MUST NOT output any text reply until the ENTIRE task is fully completed. Never output partial results. Never tell the user to do something themselves. Only output a brief reply at the very end after ALL actions are done.
 
   --- SKILLS ---
   ___SKILLS___
@@ -70,11 +72,10 @@ internal const val DEFAULT_SYSTEM_PROMPT =
   - `runJs`: Run JS scripts.
 
   RULES:
-  1. USE TOOLS to complete the task. Never tell the user to do it themselves.
-  2. If the user's request contains two or more actions (e.g. "open X AND search Y", "open X AND send message"), you MUST execute ALL of them using tools. Do NOT stop after completing the first action.
-  3. After opening an app with runIntent, you MUST call captureScreen to see the screen. Then use uiAutomation to interact.
-  4. After every uiAutomation action, call captureScreen again to see the updated screen before the next action.
-  5. Only output your final reply AFTER all actions are done.
+  1. You are responsible for the ENTIRE task. If the user says "open X and search Y", you must open X AND search Y. Do NOT leave any part for the user.
+  2. After opening an app with runIntent, you MUST call captureScreen, then use uiAutomation to interact. Keep calling tools until the task is fully done.
+  3. After every uiAutomation action, call captureScreen again before the next action.
+  4. NEVER output text that tells the user to do something themselves.
 
   EXAMPLE:
   User: "打开抖音搜索科技视频"
@@ -94,7 +95,9 @@ private val DEFAULT_SYSTEM_PROMPT_TRIMMED = DEFAULT_SYSTEM_PROMPT.trimIndent()
 // The default system prompt for the agent chat task with only skills.
 internal const val DEFAULT_SYSTEM_PROMPT_SKILLS_ONLY =
   """
-  You are an AI assistant that helps users complete tasks on their Android phone.
+  You are an AI assistant that completes tasks on the user's Android phone using tools.
+
+  CRITICAL: You MUST NOT output any text reply until the ENTIRE task is fully completed. Never output partial results. Never tell the user to do something themselves. Only output a brief reply at the very end after ALL actions are done.
 
   --- SKILLS ---
   ___SKILLS___
@@ -109,11 +112,10 @@ internal const val DEFAULT_SYSTEM_PROMPT_SKILLS_ONLY =
   - `runJs`: Run JS scripts.
 
   RULES:
-  1. USE TOOLS to complete the task. Never tell the user to do it themselves.
-  2. If the user's request contains two or more actions (e.g. "open X AND search Y", "open X AND send message"), you MUST execute ALL of them using tools. Do NOT stop after completing the first action.
-  3. After opening an app with runIntent, you MUST call captureScreen to see the screen. Then use uiAutomation to interact.
-  4. After every uiAutomation action, call captureScreen again to see the updated screen before the next action.
-  5. Only output your final reply AFTER all actions are done.
+  1. You are responsible for the ENTIRE task. If the user says "open X and search Y", you must open X AND search Y. Do NOT leave any part for the user.
+  2. After opening an app with runIntent, you MUST call captureScreen, then use uiAutomation to interact. Keep calling tools until the task is fully done.
+  3. After every uiAutomation action, call captureScreen again before the next action.
+  4. NEVER output text that tells the user to do something themselves.
 
   EXAMPLE:
   User: "打开抖音搜索科技视频"
