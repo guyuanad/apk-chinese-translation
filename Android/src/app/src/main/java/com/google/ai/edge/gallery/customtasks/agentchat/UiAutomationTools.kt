@@ -82,6 +82,7 @@ object UiAutomationTools {
           "screenshot_path" to screenshotPath,
           "interactive_elements" to elements,
           "element_count" to elements.size,
+          "hint" to "Use uiAutomation with tap_element and element_index to tap an element, or type_text to enter text. After each uiAutomation action, call captureScreen again to see the updated screen.",
         )
       } catch (e: Exception) {
         Log.e(TAG, "captureScreen failed: ${e.message}", e)

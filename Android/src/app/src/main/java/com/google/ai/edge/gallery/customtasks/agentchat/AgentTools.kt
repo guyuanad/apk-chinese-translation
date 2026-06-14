@@ -761,7 +761,13 @@ open class AgentTools(
         return@runBlocking mapOf("error" to "Too many calls to uiAutomation", "status" to "blocked")
       }
       withToolLogging("uiAutomation") {
-        UiAutomationTools.executeUiAction(context, action, parameters)
+        val result = UiAutomationTools.executeUiAction(context, action, parameters)
+        // Guide the model to capture screen after UI action
+        if (result["status"] == "success") {
+          result + ("hint" to "Action completed. Call captureScreen() to see the updated screen before the next action.")
+        } else {
+          result
+        }
       }
     }
   }
@@ -810,7 +816,12 @@ open class AgentTools(
         _actionChannel.send(permissionAction)
         permissionAction.result.await()
       }
-    return mapOf("action" to intent, "parameters" to parameters, "result" to res)
+    val result = mapOf("action" to intent, "parameters" to parameters, "result" to res)
+    // Guide the model to continue with the next tool after opening an app
+    if (intent == "open_app" && res == "succeeded") {
+      return result + ("hint" to "App opened successfully. You MUST now call captureScreen() to see the app's UI, then use uiAutomation to interact with elements. Do NOT stop here.")
+    }
+    return result
   }
 
   private fun guardMissingEntityWithSkillFallback(name: String, type: String): Map<String, String> {
