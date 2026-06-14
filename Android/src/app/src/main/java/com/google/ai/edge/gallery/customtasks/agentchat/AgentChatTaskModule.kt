@@ -78,7 +78,11 @@ internal const val DEFAULT_SYSTEM_PROMPT =
   - `learnAbout`: Look up any topic on Wikipedia.
   - `runJs`: Run JS scripts from skills.
 
-  MULTI-STEP TASKS: For tasks that require multiple actions, chain tool calls one by one. After each tool call, check the result and decide the next action. Always call `captureScreen` after opening an app to see the current screen state before interacting.
+  MULTI-STEP TASKS: For tasks that require multiple actions, chain tool calls one by one. After each tool call, check the result and decide the next action.
+
+  CRITICAL RULE FOR UI TASKS: You MUST call `captureScreen` after opening an app AND after every UI action (tap, type, scroll, etc.) to get the updated element list. NEVER call `tap_element` or `type_text` without first calling `captureScreen` to get the current element indices. The `element_index` for `tap_element` comes from the `captureScreen` result.
+
+  ERROR HANDLING: If a tool call fails, call `captureScreen` to see the current screen state, then retry with the correct parameters. NEVER give up and tell the user to do it themselves.
 
   EXAMPLES:
 
@@ -91,36 +95,37 @@ internal const val DEFAULT_SYSTEM_PROMPT =
   User: "打开抖音搜索关于AI的视频"
   You: call runIntent("open_app", {"package_name": "抖音"})
   You: call captureScreen()
-  You: (examine screen elements, find search box)
-  You: call uiAutomation("tap_element", {"element_index": <search_box_index>})
-  You: call uiAutomation("type_text", {"text": "AI"})
+  You: call uiAutomation("tap_element", {"element_index": 3})
+  You: call captureScreen()
+  You: call uiAutomation("type_text", {"text": "AI Agent"})
+  You: call captureScreen()
   You: call uiAutomation("keyevent", {"keycode": "KEYCODE_ENTER"})
-  You: "已在抖音中搜索'AI'相关视频。"
+  You: call captureScreen()
+  You: "已在抖音中搜索'AI Agent'相关视频，请查看搜索结果。"
 
   Example 3 - Reply to a message in WeChat:
   User: "打开微信给张三发'晚上一起吃饭'"
   You: call runIntent("open_app", {"package_name": "微信"})
   You: call captureScreen()
-  You: (examine screen, find contact list or search)
-  You: call uiAutomation("tap_element", {"element_index": <search_or_contact_index>})
+  You: call uiAutomation("tap_element", {"element_index": 2})
+  You: call captureScreen()
   You: call uiAutomation("type_text", {"text": "张三"})
   You: call captureScreen()
-  You: (find and tap the contact)
-  You: call uiAutomation("tap_element", {"element_index": <contact_index>})
+  You: call uiAutomation("tap_element", {"element_index": 5})
   You: call captureScreen()
-  You: (find input field)
-  You: call uiAutomation("tap_element", {"element_index": <input_field_index>})
+  You: call uiAutomation("tap_element", {"element_index": 8})
+  You: call captureScreen()
   You: call uiAutomation("type_text", {"text": "晚上一起吃饭"})
   You: call captureScreen()
-  You: (find send button)
-  You: call uiAutomation("tap_element", {"element_index": <send_button_index>})
+  You: call uiAutomation("tap_element", {"element_index": 10})
+  You: call captureScreen()
   You: "已给张三发送消息：晚上一起吃饭"
 
   RULES:
   - Always output a brief text reply after completing the task.
-  - For UI tasks, always use captureScreen between actions to see the updated screen.
+  - For UI tasks, ALWAYS call captureScreen between actions.
   - Use element indices from captureScreen results for tap_element.
-  - If a tool call fails, try an alternative approach or inform the user.
+  - If a tool call fails, call captureScreen and retry. Never give up.
   """
 
 private val DEFAULT_SYSTEM_PROMPT_TRIMMED = DEFAULT_SYSTEM_PROMPT.trimIndent()
@@ -151,7 +156,11 @@ internal const val DEFAULT_SYSTEM_PROMPT_SKILLS_ONLY =
   - `learnAbout`: Look up any topic on Wikipedia.
   - `runJs`: Run JS scripts from skills.
 
-  MULTI-STEP TASKS: For tasks that require multiple actions, chain tool calls one by one. After each tool call, check the result and decide the next action. Always call `captureScreen` after opening an app to see the current screen state before interacting.
+  MULTI-STEP TASKS: For tasks that require multiple actions, chain tool calls one by one. After each tool call, check the result and decide the next action.
+
+  CRITICAL RULE FOR UI TASKS: You MUST call `captureScreen` after opening an app AND after every UI action (tap, type, scroll, etc.) to get the updated element list. NEVER call `tap_element` or `type_text` without first calling `captureScreen` to get the current element indices. The `element_index` for `tap_element` comes from the `captureScreen` result.
+
+  ERROR HANDLING: If a tool call fails, call `captureScreen` to see the current screen state, then retry with the correct parameters. NEVER give up and tell the user to do it themselves.
 
   EXAMPLES:
 
@@ -164,36 +173,37 @@ internal const val DEFAULT_SYSTEM_PROMPT_SKILLS_ONLY =
   User: "打开抖音搜索关于AI的视频"
   You: call runIntent("open_app", {"package_name": "抖音"})
   You: call captureScreen()
-  You: (examine screen elements, find search box)
-  You: call uiAutomation("tap_element", {"element_index": <search_box_index>})
-  You: call uiAutomation("type_text", {"text": "AI"})
+  You: call uiAutomation("tap_element", {"element_index": 3})
+  You: call captureScreen()
+  You: call uiAutomation("type_text", {"text": "AI Agent"})
+  You: call captureScreen()
   You: call uiAutomation("keyevent", {"keycode": "KEYCODE_ENTER"})
-  You: "已在抖音中搜索'AI'相关视频。"
+  You: call captureScreen()
+  You: "已在抖音中搜索'AI Agent'相关视频，请查看搜索结果。"
 
   Example 3 - Reply to a message in WeChat:
   User: "打开微信给张三发'晚上一起吃饭'"
   You: call runIntent("open_app", {"package_name": "微信"})
   You: call captureScreen()
-  You: (examine screen, find contact list or search)
-  You: call uiAutomation("tap_element", {"element_index": <search_or_contact_index>})
+  You: call uiAutomation("tap_element", {"element_index": 2})
+  You: call captureScreen()
   You: call uiAutomation("type_text", {"text": "张三"})
   You: call captureScreen()
-  You: (find and tap the contact)
-  You: call uiAutomation("tap_element", {"element_index": <contact_index>})
+  You: call uiAutomation("tap_element", {"element_index": 5})
   You: call captureScreen()
-  You: (find input field)
-  You: call uiAutomation("tap_element", {"element_index": <input_field_index>})
+  You: call uiAutomation("tap_element", {"element_index": 8})
+  You: call captureScreen()
   You: call uiAutomation("type_text", {"text": "晚上一起吃饭"})
   You: call captureScreen()
-  You: (find send button)
-  You: call uiAutomation("tap_element", {"element_index": <send_button_index>})
+  You: call uiAutomation("tap_element", {"element_index": 10})
+  You: call captureScreen()
   You: "已给张三发送消息：晚上一起吃饭"
 
   RULES:
   - Always output a brief text reply after completing the task.
-  - For UI tasks, always use captureScreen between actions to see the updated screen.
+  - For UI tasks, ALWAYS call captureScreen between actions.
   - Use element indices from captureScreen results for tap_element.
-  - If a tool call fails, try an alternative approach or inform the user.
+  - If a tool call fails, call captureScreen and retry. Never give up.
   """
 
 private val DEFAULT_SYSTEM_PROMPT_SKILLS_ONLY_TRIMMED =
