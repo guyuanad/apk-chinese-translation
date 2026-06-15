@@ -904,6 +904,7 @@ open class AgentTools(
         val escapedQuery = query.replace("\\", "\\\\").replace("\"", "\\\"")
 
         // Step 1: Open the app
+        writeLog("D", TAG, "searchInApp Step 1: Opening app $appName")
         _actionChannel.send(SkillProgressAgentAction(
           label = "Opening $appName...",
           inProgress = true,
@@ -911,6 +912,7 @@ open class AgentTools(
           addItemDescription = "Opening app: $appName"
         ))
         val openResult = runIntentInternal("open_app", "{\"package_name\": \"$escapedAppName\"}")
+        writeLog("D", TAG, "searchInApp Step 1 result: ${openResult["result"]}")
         if (openResult["result"] != "succeeded") {
           return@withToolLogging mapOf(
             "status" to "error",
@@ -920,9 +922,11 @@ open class AgentTools(
         }
 
         // Step 2: Wait for app to load
+        writeLog("D", TAG, "searchInApp Step 2: Waiting 3s for app to load")
         delay(3000)
 
         // Step 3: Capture screen and find search element
+        writeLog("D", TAG, "searchInApp Step 3: Capturing screen to find search element")
         _actionChannel.send(SkillProgressAgentAction(
           label = "Finding search button in $appName...",
           inProgress = true,
@@ -940,6 +944,7 @@ open class AgentTools(
 
         val elements = screenResult["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
         val searchIdx = UiAutomationTools.findSearchElementIndex(elements)
+        writeLog("D", TAG, "searchInApp Step 3: Found ${elements.size} elements, searchIdx=$searchIdx")
 
         if (searchIdx == null) {
           // No search element found, clean up state and return error
@@ -954,6 +959,7 @@ open class AgentTools(
         }
 
         // Step 4: Tap search element
+        writeLog("D", TAG, "searchInApp Step 4: Tapping search element at index $searchIdx")
         _actionChannel.send(SkillProgressAgentAction(
           label = "Tapping search button...",
           inProgress = true,
@@ -961,6 +967,7 @@ open class AgentTools(
           addItemDescription = "Tapping element at index $searchIdx"
         ))
         val tapResult = UiAutomationTools.executeUiAction(context, "tap_element", "{\"element_index\": $searchIdx}")
+        writeLog("D", TAG, "searchInApp Step 4 result: ${tapResult["status"]} - ${tapResult["details"] ?: tapResult["message"]}")
         if (tapResult["status"] != "success") {
           pendingAppOpen = false
           lastCaptureScreenTime = System.currentTimeMillis()
@@ -972,9 +979,11 @@ open class AgentTools(
         }
 
         // Step 5: Wait for search page to load
+        writeLog("D", TAG, "searchInApp Step 5: Waiting 2s for search page to load")
         delay(2000)
 
         // Step 6: Capture search page and look for input field
+        writeLog("D", TAG, "searchInApp Step 6: Capturing search page to find input field")
         val searchScreenResult = UiAutomationTools.captureScreen(context)
         val searchElements = searchScreenResult["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
 
@@ -988,14 +997,19 @@ open class AgentTools(
             break
           }
         }
+        writeLog("D", TAG, "searchInApp Step 6: Found ${searchElements.size} elements on search page, inputIdx=$inputIdx")
 
         // Step 7: Tap input field if found
         if (inputIdx != null) {
+          writeLog("D", TAG, "searchInApp Step 7: Tapping input field at index $inputIdx")
           UiAutomationTools.executeUiAction(context, "tap_element", "{\"element_index\": $inputIdx}")
           delay(500)
+        } else {
+          writeLog("D", TAG, "searchInApp Step 7: No input field found, typing directly")
         }
 
-        // Step 8: Type the query
+        // Step 8: Type the query (now supports Chinese via accessibility ACTION_SET_TEXT)
+        writeLog("D", TAG, "searchInApp Step 8: Typing query: $query")
         _actionChannel.send(SkillProgressAgentAction(
           label = "Typing search query: $query",
           inProgress = true,
@@ -1003,6 +1017,7 @@ open class AgentTools(
           addItemDescription = "Typing: $query"
         ))
         val typeResult = UiAutomationTools.executeUiAction(context, "type_text", "{\"text\": \"$escapedQuery\"}")
+        writeLog("D", TAG, "searchInApp Step 8 result: ${typeResult["status"]} - ${typeResult["details"] ?: typeResult["message"]}")
         if (typeResult["status"] != "success") {
           pendingAppOpen = false
           lastCaptureScreenTime = System.currentTimeMillis()
@@ -1015,6 +1030,7 @@ open class AgentTools(
 
         // Step 9: Press Enter to search
         delay(500)
+        writeLog("D", TAG, "searchInApp Step 9: Pressing Enter")
         _actionChannel.send(SkillProgressAgentAction(
           label = "Searching for '$query'...",
           inProgress = true,
@@ -1024,7 +1040,13 @@ open class AgentTools(
         UiAutomationTools.executeUiAction(context, "keyevent", "{\"keycode\": \"KEYCODE_ENTER\"}")
 
         // Step 10: Wait for results
+        writeLog("D", TAG, "searchInApp Step 10: Waiting 2s for results")
         delay(2000)
+
+        // Step 11: Capture final screen to verify
+        writeLog("D", TAG, "searchInApp Step 11: Capturing final screen to verify")
+        val finalScreen = UiAutomationTools.captureScreen(context)
+        val finalSummary = finalScreen["screen_summary"] as? String ?: ""
 
         // Clean up state
         pendingAppOpen = false
@@ -1037,12 +1059,15 @@ open class AgentTools(
           addItemDescription = "Searched for '$query' in $appName"
         ))
 
+        writeLog("D", TAG, "searchInApp completed successfully for '$query' in $appName")
+
         mapOf(
           "status" to "success",
           "message" to "Successfully searched for '$query' in $appName.",
           "app" to appName,
           "query" to query,
           "search_completed" to true,
+          "final_screen_summary" to finalSummary,
           "hint" to "Search completed. Call captureScreen() if you need to see the results, or use uiAutomation() to interact with the results."
         )
       }

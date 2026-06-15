@@ -17,8 +17,10 @@ package com.google.ai.edge.gallery.customtasks.agentchat
 
 import android.content.Context
 import android.graphics.Rect
+import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
+import android.view.accessibility.AccessibilityNodeInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -242,6 +244,22 @@ object UiAutomationTools {
       )
     }
 
+    // Try accessibility ACTION_CLICK first (more reliable than coordinate tap)
+    try {
+      val clicked = element.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+      if (clicked) {
+        element.recycle()
+        return mapOf(
+          "status" to "success",
+          "action" to "tap_element",
+          "details" to "Clicked element $index via accessibility",
+        )
+      }
+    } catch (e: Exception) {
+      Log.w(TAG, "Accessibility click failed for element $index: ${e.message}")
+    }
+
+    // Fallback to coordinate-based tap
     val rect = android.graphics.Rect()
     element.getBoundsInScreen(rect)
     element.recycle()
@@ -266,14 +284,77 @@ object UiAutomationTools {
       return errorResult("type_text", "Missing required parameter: text")
     }
 
-    // Escape for shell: replace spaces with %s and escape double quotes.
+    // Try accessibility service ACTION_SET_TEXT first (supports Chinese and all Unicode)
+    val service = UiAutomationServiceHolder.instance
+    if (service != null) {
+      try {
+        val rootNode = service.rootInActiveWindow
+        if (rootNode != null) {
+          // Find the currently focused input field
+          val focusedNode = rootNode.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
+          if (focusedNode != null) {
+            val args = Bundle()
+            args.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
+            val setResult = focusedNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)
+            focusedNode.recycle()
+            if (setResult) {
+              Log.d(TAG, "Typed via accessibility ACTION_SET_TEXT: $text")
+              return mapOf(
+                "status" to "success",
+                "action" to "type_text",
+                "details" to "Typed via accessibility: $text",
+              )
+            } else {
+              Log.w(TAG, "ACTION_SET_TEXT returned false, trying fallback")
+            }
+          } else {
+            Log.w(TAG, "No focused input field found, trying fallback")
+          }
+        }
+      } catch (e: Exception) {
+        Log.w(TAG, "Accessibility type failed: ${e.message}, trying fallback")
+      }
+    }
+
+    // Fallback: use clipboard + paste for non-ASCII text
+    val hasNonAscii = text.any { it.code > 127 }
+    if (hasNonAscii) {
+      // For Chinese/Unicode text, use clipboard approach
+      try {
+        // Set clipboard via am broadcast
+        val escapedForClip = text.replace("\\", "\\\\").replace("\"", "\\\"").replace("'", "\\'")
+        val clipResult = execShellCommand("am broadcast -a com.android.clipboard.copy --es text \"$escapedForClip\"")
+        // Alternative: use service to set clipboard
+        if (service != null) {
+          val clipboard = service.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+          if (clipboard != null) {
+            val clip = android.content.ClipData.newPlainText("text", text)
+            clipboard.setPrimaryClip(clip)
+            Log.d(TAG, "Set clipboard via ClipboardManager: $text")
+          }
+        }
+        // Long press to paste, or use Ctrl+V
+        Thread.sleep(300)
+        execInputCommand("keyevent 279") // KEYCODE_PASTE
+        Log.d(TAG, "Pasted from clipboard: $text")
+        return mapOf(
+          "status" to "success",
+          "action" to "type_text",
+          "details" to "Typed via clipboard paste: $text",
+        )
+      } catch (e: Exception) {
+        Log.w(TAG, "Clipboard paste failed: ${e.message}")
+      }
+    }
+
+    // Final fallback: input text command (ASCII only)
     val escaped = text.replace("\"", "\\\"").replace(" ", "%s")
     val result = execInputCommand("text \"$escaped\"")
     return result?.let {
       mapOf(
         "status" to "success",
         "action" to "type_text",
-        "details" to "Typed: $text",
+        "details" to "Typed via shell: $text",
       )
     } ?: errorResult("type_text", "Failed to type text")
   }
