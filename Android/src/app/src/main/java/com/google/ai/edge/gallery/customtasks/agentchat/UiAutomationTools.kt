@@ -79,7 +79,7 @@ object UiAutomationTools {
           "foreground_package" to screenInfo.foregroundPackage,
           "interactive_elements" to elements,
           "element_count" to elements.size,
-          "hint" to "Use uiAutomation with tap_element and element_index to tap an element, or type_text to enter text. After each uiAutomation action, call captureScreen again to see the updated screen.",
+          "hint" to "Look at the elements above. Find the search box (usually has is_editable=true or content_description containing '搜索'). Call uiAutomation('tap_element', {\"element_index\": INDEX}) to tap it, then uiAutomation('type_text', {\"text\": \"YOUR QUERY\"}) to type. If you see a search icon, tap it first.",
         )
         if (screenshotPath != null) {
           result["screenshot_path"] = screenshotPath

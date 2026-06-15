@@ -133,8 +133,13 @@ class UiAutomationService : AccessibilityService() {
 
   /** Returns a structured summary of the current screen. */
   fun getScreenInfo(): ScreenInfo {
+    // Try to get foreground package from rootInActiveWindow first (more reliable)
+    val pkgFromRoot = try {
+      rootInActiveWindow?.packageName?.toString()
+    } catch (_: Exception) { null }
+    val pkg = pkgFromRoot ?: foregroundPackage ?: ""
     return ScreenInfo(
-      foregroundPackage = foregroundPackage ?: "",
+      foregroundPackage = pkg,
       rootNode = rootNode,
       interactiveElements = getInteractiveElements(),
     )
@@ -145,40 +150,43 @@ class UiAutomationService : AccessibilityService() {
    * or null if index is out of bounds.
    */
   fun getInteractiveElement(index: Int): AccessibilityNodeInfo? {
-    val elements = getInteractiveElements()
-    if (index < 0 || index >= elements.size) return null
-
-    val elementInfo = elements[index]
-    val bounds = elementInfo["bounds"] as? Map<String, Int> ?: return null
-    val rect = Rect(
-      bounds["left"] ?: 0,
-      bounds["top"] ?: 0,
-      bounds["right"] ?: 0,
-      bounds["bottom"] ?: 0,
-    )
-
-    // Find the node by matching bounds and text.
-    return findNodeByBounds(rootNode, rect, elementInfo["text"] as? String)
+    // Re-traverse to get the node at the given index
+    val root = rootNode ?: return null
+    val nodes = mutableListOf<AccessibilityNodeInfo>()
+    collectInteractiveNodes(root, nodes, 5, 0, 200)
+    if (index < 0 || index >= nodes.size) return null
+    return nodes[index]
   }
 
-  private fun findNodeByBounds(
-    node: AccessibilityNodeInfo?,
-    bounds: Rect,
-    text: String?,
-  ): AccessibilityNodeInfo? {
-    if (node == null) return null
-    val nodeRect = Rect()
-    node.getBoundsInScreen(nodeRect)
-    if (nodeRect == bounds && (text == null || node.text?.toString() == text)) {
-      return node
+  private fun collectInteractiveNodes(
+    node: AccessibilityNodeInfo,
+    nodes: MutableList<AccessibilityNodeInfo>,
+    maxDepth: Int,
+    currentDepth: Int,
+    maxNodes: Int,
+  ) {
+    if (nodes.size >= maxNodes) return
+    if (currentDepth > maxDepth) return
+
+    val isClickable = node.isClickable
+    val isEditable = node.isEditable
+    val isFocusable = node.isFocusable
+
+    if (isClickable || isEditable || isFocusable) {
+      val rect = Rect()
+      node.getBoundsInScreen(rect)
+      if (rect.width() > 0 && rect.height() > 0) {
+        nodes.add(node)
+      }
     }
+
     for (i in 0 until node.childCount) {
       val child = node.getChild(i)
-      val result = findNodeByBounds(child, bounds, text)
-      if (result != null) return result
-      child?.recycle()
+      if (child != null) {
+        collectInteractiveNodes(child, nodes, maxDepth, currentDepth + 1, maxNodes)
+        // Don't recycle children here as they're stored in the list
+      }
     }
-    return null
   }
 
   private fun traverseNode(
@@ -199,26 +207,19 @@ class UiAutomationService : AccessibilityService() {
       val rect = Rect()
       node.getBoundsInScreen(rect)
       if (rect.width() > 0 && rect.height() > 0) {
+        val text = node.text?.toString() ?: ""
+        val contentDesc = node.contentDescription?.toString() ?: ""
+        val className = node.className?.toString() ?: ""
+        // Simplify class name: only keep the last part after last dot
+        val simpleClass = className.substringAfterLast(".")
         elements.add(
           mapOf(
             "index" to elements.size,
-            "text" to (node.text?.toString() ?: ""),
-            "content_description" to (node.contentDescription?.toString() ?: ""),
-            "class_name" to (node.className?.toString() ?: ""),
-            "bounds" to
-              mapOf(
-                "left" to rect.left,
-                "top" to rect.top,
-                "right" to rect.right,
-                "bottom" to rect.bottom,
-              ),
-            "center" to
-              mapOf(
-                "x" to (rect.left + rect.right) / 2,
-                "y" to (rect.top + rect.bottom) / 2,
-              ),
-            "is_clickable" to isClickable,
+            "text" to text,
+            "content_description" to contentDesc,
+            "class" to simpleClass,
             "is_editable" to isEditable,
+            "is_clickable" to isClickable,
           ),
         )
       }
