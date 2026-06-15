@@ -158,6 +158,7 @@ open class AgentTools(
   private val callCounts = ConcurrentHashMap<String, AtomicInteger>()
   private val maxCallsPerTool = 10
   private var lastCaptureScreenTime: Long = 0  // Track when captureScreen was last called
+  private var pendingAppOpen: Boolean = false   // Track if an app was just opened and needs captureScreen
 
   private val _actionChannel = Channel<AgentAction>(Channel.UNLIMITED)
   val actionChannel: ReceiveChannel<AgentAction> = _actionChannel
@@ -218,6 +219,9 @@ open class AgentTools(
   ): Map<String, String> {
     if (!checkCallLimit("loadSkill")) {
       return mapOf("error" to "Too many calls to loadSkill", "status" to "blocked")
+    }
+    if (pendingAppOpen) {
+      return mapOf("status" to "error", "message" to "You just opened an app. You MUST call captureScreen() first to see the app's screen before doing anything else.")
     }
     return withToolLogging("loadSkill") {
       loadSkillInternal(skillName)
@@ -545,6 +549,9 @@ open class AgentTools(
       if (!checkCallLimit("learnAbout")) {
         return@runBlocking mapOf("error" to "Too many calls to learnAbout", "status" to "blocked")
       }
+      if (pendingAppOpen) {
+        return@runBlocking mapOf("status" to "error", "message" to "You just opened an app. You MUST call captureScreen() first to see the app's screen before doing anything else.")
+      }
       withToolLogging("learnAbout") {
         learnAboutInternal(topic, language)
       }
@@ -644,6 +651,13 @@ open class AgentTools(
         if (!checkCallLimit("searchWeb")) {
           return@runBlocking mapOf("error" to "Too many calls to searchWeb", "status" to "blocked")
         }
+        // Block searchWeb if an app was just opened and captureScreen hasn't been called yet
+        if (pendingAppOpen) {
+          return@runBlocking mapOf(
+            "status" to "error",
+            "message" to "You just opened an app. You MUST call captureScreen() first to see the app's screen before doing anything else. Do NOT use searchWeb now."
+          )
+        }
         withToolLogging("searchWeb") {
           searchWebInternal(query, numResults)
         }
@@ -740,6 +754,7 @@ open class AgentTools(
         val result = UiAutomationTools.captureScreen(context)
         if (result["status"] == "success") {
           lastCaptureScreenTime = System.currentTimeMillis()
+          pendingAppOpen = false
         }
         result
       }
@@ -832,9 +847,11 @@ open class AgentTools(
         permissionAction.result.await()
       }
     val result = mapOf("action" to intent, "parameters" to parameters, "result" to res)
-    // Guide the model to continue with the next tool after opening an app
+    // Set pending flag and guide the model to continue with captureScreen after opening an app
     if (intent == "open_app" && res == "succeeded") {
-      return result + ("hint" to "App opened successfully. You MUST now call captureScreen() to see the app's UI, then use uiAutomation to interact with elements. Do NOT stop here.")
+      pendingAppOpen = true
+      lastCaptureScreenTime = 0L
+      return result + ("hint" to "App opened successfully. You MUST now call captureScreen() to see the app's UI. Do NOT use searchWeb or any other tool. Only captureScreen() is allowed next.")
     }
     return result
   }
