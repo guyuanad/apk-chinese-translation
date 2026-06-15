@@ -405,6 +405,48 @@ object UiAutomationTools {
   }
 
   /**
+   * Finds the index of a search-related element in the list of interactive elements.
+   * Returns null if no search element is found.
+   * Priority: editable search field > clickable search button > any editable field.
+   */
+  fun findSearchElementIndex(elements: List<Map<String, Any>>): Int? {
+    val searchKeywords = listOf("搜索", "search", "Search", "搜一搜")
+
+    // Priority 1: Find editable search field
+    for (el in elements) {
+      val text = el["text"] as? String ?: ""
+      val desc = el["content_description"] as? String ?: ""
+      val editable = el["is_editable"] as? Boolean ?: false
+      val idx = el["index"] as? Int ?: continue
+      if (editable && (searchKeywords.any { text.contains(it) || desc.contains(it) })) {
+        return idx
+      }
+    }
+
+    // Priority 2: Find clickable search button/icon
+    for (el in elements) {
+      val text = el["text"] as? String ?: ""
+      val desc = el["content_description"] as? String ?: ""
+      val clickable = el["is_clickable"] as? Boolean ?: false
+      val idx = el["index"] as? Int ?: continue
+      if (clickable && (searchKeywords.any { text.contains(it) || desc.contains(it) })) {
+        return idx
+      }
+    }
+
+    // Priority 3: Find any editable field
+    for (el in elements) {
+      val editable = el["is_editable"] as? Boolean ?: false
+      val idx = el["index"] as? Int ?: continue
+      if (editable) {
+        return idx
+      }
+    }
+
+    return null
+  }
+
+  /**
    * Scans elements for search-related items and builds a specific hint
    * telling the model exactly which element_index to tap.
    */

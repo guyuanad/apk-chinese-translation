@@ -48,6 +48,7 @@ import io.modelcontextprotocol.kotlin.sdk.TextContent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -159,6 +160,7 @@ open class AgentTools(
   private val maxCallsPerTool = 10
   private var lastCaptureScreenTime: Long = 0  // Track when captureScreen was last called
   private var pendingAppOpen: Boolean = false   // Track if an app was just opened and needs captureScreen
+  private var lastOpenedAppName: String? = null // Track last opened app to prevent re-opening
 
   private val _actionChannel = Channel<AgentAction>(Channel.UNLIMITED)
   val actionChannel: ReceiveChannel<AgentAction> = _actionChannel
@@ -177,7 +179,10 @@ open class AgentTools(
 
   fun resetCallCounts() {
     callCounts.clear()
-    writeLog("D", TAG, "Tool call counts reset.")
+    lastCaptureScreenTime = 0
+    pendingAppOpen = false
+    lastOpenedAppName = null
+    writeLog("D", TAG, "Tool call counts and state reset.")
   }
 
   private suspend fun <T> withToolLogging(
@@ -828,6 +833,17 @@ open class AgentTools(
           "message" to "App already opened. You MUST call captureScreen() first to see the screen before doing anything else. Do NOT call runIntent again."
         )
       }
+      // Block open_app if the same app was already opened in this session
+      if (intent == "open_app") {
+        val targetApp = extractPackageNameFromParams(parameters)
+        if (targetApp != null && targetApp == lastOpenedAppName) {
+          return@runBlocking mapOf(
+            "status" to "error",
+            "action" to intent,
+            "message" to "You already opened $targetApp. Do NOT open it again. Use captureScreen() to see the current screen, or uiAutomation() to interact with elements."
+          )
+        }
+      }
       withToolLogging("runIntent") {
         runIntentInternal(intent, parameters)
       }
@@ -859,9 +875,186 @@ open class AgentTools(
     if (intent == "open_app" && res == "succeeded") {
       pendingAppOpen = true
       lastCaptureScreenTime = 0L
+      // Track the opened app name to prevent re-opening
+      lastOpenedAppName = extractPackageNameFromParams(parameters)
       return result + ("hint" to "App opened successfully. You MUST now call captureScreen() to see the app's UI. Do NOT call runIntent again. Do NOT use searchWeb. Only captureScreen() is allowed next.")
     }
     return result
+  }
+
+  @Tool(
+    description =
+      "Open an app and search for something. Use this when the user wants to search in an app. " +
+        "This handles the ENTIRE flow automatically: open app → tap search button → type query → press enter. " +
+        "Example: searchInApp(\"抖音\", \"科技视频\"), searchInApp(\"小红书\", \"美食\"). " +
+        "ALWAYS prefer this over runIntent+captureScreen+uiAutomation for search tasks."
+  )
+  fun searchInApp(
+    @ToolParam(description = "The app name to search in, e.g., '抖音', '小红书', '淘宝'")
+    appName: String,
+    @ToolParam(description = "The search query, e.g., '科技视频', '美食', '手机'")
+    query: String,
+  ): Map<String, Any> {
+    return runBlocking(Dispatchers.Default) {
+      if (!checkCallLimit("searchInApp")) {
+        return@runBlocking mapOf("error" to "Too many calls to searchInApp", "status" to "blocked")
+      }
+      withToolLogging("searchInApp") {
+        val escapedAppName = appName.replace("\\", "\\\\").replace("\"", "\\\"")
+        val escapedQuery = query.replace("\\", "\\\\").replace("\"", "\\\"")
+
+        // Step 1: Open the app
+        _actionChannel.send(SkillProgressAgentAction(
+          label = "Opening $appName...",
+          inProgress = true,
+          addItemTitle = "Open $appName",
+          addItemDescription = "Opening app: $appName"
+        ))
+        val openResult = runIntentInternal("open_app", "{\"package_name\": \"$escapedAppName\"}")
+        if (openResult["result"] != "succeeded") {
+          return@withToolLogging mapOf(
+            "status" to "error",
+            "step" to "open_app",
+            "message" to "Failed to open $appName. Error: ${openResult["result"]}"
+          )
+        }
+
+        // Step 2: Wait for app to load
+        delay(3000)
+
+        // Step 3: Capture screen and find search element
+        _actionChannel.send(SkillProgressAgentAction(
+          label = "Finding search button in $appName...",
+          inProgress = true,
+          addItemTitle = "Find search button",
+          addItemDescription = "Scanning screen for search elements"
+        ))
+        val screenResult = UiAutomationTools.captureScreen(context)
+        if (screenResult["status"] != "success") {
+          return@withToolLogging mapOf(
+            "status" to "error",
+            "step" to "captureScreen",
+            "message" to "Failed to capture screen: ${screenResult["message"]}"
+          )
+        }
+
+        val elements = screenResult["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
+        val searchIdx = UiAutomationTools.findSearchElementIndex(elements)
+
+        if (searchIdx == null) {
+          // No search element found, clean up state and return error
+          pendingAppOpen = false
+          lastCaptureScreenTime = System.currentTimeMillis()
+          return@withToolLogging mapOf(
+            "status" to "error",
+            "step" to "find_search",
+            "message" to "Could not find search element in $appName. Try using captureScreen() and uiAutomation() manually.",
+            "screen_summary" to (screenResult["screen_summary"] ?: "")
+          )
+        }
+
+        // Step 4: Tap search element
+        _actionChannel.send(SkillProgressAgentAction(
+          label = "Tapping search button...",
+          inProgress = true,
+          addItemTitle = "Tap search button",
+          addItemDescription = "Tapping element at index $searchIdx"
+        ))
+        val tapResult = UiAutomationTools.executeUiAction(context, "tap_element", "{\"element_index\": $searchIdx}")
+        if (tapResult["status"] != "success") {
+          pendingAppOpen = false
+          lastCaptureScreenTime = System.currentTimeMillis()
+          return@withToolLogging mapOf(
+            "status" to "error",
+            "step" to "tap_search",
+            "message" to "Failed to tap search button: ${tapResult["message"]}"
+          )
+        }
+
+        // Step 5: Wait for search page to load
+        delay(2000)
+
+        // Step 6: Capture search page and look for input field
+        val searchScreenResult = UiAutomationTools.captureScreen(context)
+        val searchElements = searchScreenResult["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
+
+        // Find editable input field in search page
+        var inputIdx: Int? = null
+        for (el in searchElements) {
+          val editable = el["is_editable"] as? Boolean ?: false
+          val idx = el["index"] as? Int ?: continue
+          if (editable) {
+            inputIdx = idx
+            break
+          }
+        }
+
+        // Step 7: Tap input field if found
+        if (inputIdx != null) {
+          UiAutomationTools.executeUiAction(context, "tap_element", "{\"element_index\": $inputIdx}")
+          delay(500)
+        }
+
+        // Step 8: Type the query
+        _actionChannel.send(SkillProgressAgentAction(
+          label = "Typing search query: $query",
+          inProgress = true,
+          addItemTitle = "Type search query",
+          addItemDescription = "Typing: $query"
+        ))
+        val typeResult = UiAutomationTools.executeUiAction(context, "type_text", "{\"text\": \"$escapedQuery\"}")
+        if (typeResult["status"] != "success") {
+          pendingAppOpen = false
+          lastCaptureScreenTime = System.currentTimeMillis()
+          return@withToolLogging mapOf(
+            "status" to "error",
+            "step" to "type_text",
+            "message" to "Failed to type query: ${typeResult["message"]}"
+          )
+        }
+
+        // Step 9: Press Enter to search
+        delay(500)
+        _actionChannel.send(SkillProgressAgentAction(
+          label = "Searching for '$query'...",
+          inProgress = true,
+          addItemTitle = "Press Enter to search",
+          addItemDescription = "Submitting search"
+        ))
+        UiAutomationTools.executeUiAction(context, "keyevent", "{\"keycode\": \"KEYCODE_ENTER\"}")
+
+        // Step 10: Wait for results
+        delay(2000)
+
+        // Clean up state
+        pendingAppOpen = false
+        lastCaptureScreenTime = System.currentTimeMillis()
+
+        _actionChannel.send(SkillProgressAgentAction(
+          label = "Search completed!",
+          inProgress = false,
+          addItemTitle = "Search completed",
+          addItemDescription = "Searched for '$query' in $appName"
+        ))
+
+        mapOf(
+          "status" to "success",
+          "message" to "Successfully searched for '$query' in $appName.",
+          "app" to appName,
+          "query" to query,
+          "search_completed" to true,
+          "hint" to "Search completed. Call captureScreen() if you need to see the results, or use uiAutomation() to interact with the results."
+        )
+      }
+    }
+  }
+
+  /** Extract the package_name value from a JSON parameters string. */
+  private fun extractPackageNameFromParams(params: String): String? {
+    return try {
+      val json = kotlinx.serialization.json.Json.parseToJsonElement(params).jsonObject
+      json["package_name"]?.toString()?.trim('"')
+    } catch (_: Exception) { null }
   }
 
   private fun guardMissingEntityWithSkillFallback(name: String, type: String): Map<String, String> {
