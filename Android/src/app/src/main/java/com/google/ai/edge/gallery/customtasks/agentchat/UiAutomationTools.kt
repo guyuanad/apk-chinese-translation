@@ -60,30 +60,31 @@ object UiAutomationTools {
       }
 
       try {
-        // 1. Take screenshot via screencap.
-        val screenshotPath = "/data/local/tmp/screen_capture.png"
-        val screenshotResult = execShellCommand("screencap -p $screenshotPath")
-        if (screenshotResult != 0) {
-          Log.e(TAG, "Screenshot failed with exit code $screenshotResult")
-          return@withContext mapOf(
-            "status" to "error",
-            "message" to "Screenshot failed. Exit code: $screenshotResult",
-          )
+        // 1. Try to take screenshot (optional - may fail without root).
+        var screenshotPath: String? = null
+        val screenshotResult = execShellCommand("screencap -p /data/local/tmp/screen_capture.png")
+        if (screenshotResult == 0) {
+          screenshotPath = "/data/local/tmp/screen_capture.png"
+        } else {
+          Log.w(TAG, "Screenshot failed with exit code $screenshotResult, continuing without screenshot")
         }
 
-        // 2. Get screen info from accessibility service.
+        // 2. Get screen info from accessibility service (this is the critical part).
         val screenInfo = service.getScreenInfo()
         val elements = screenInfo.interactiveElements
 
-        // 3. Build result.
-        mapOf(
+        // 3. Build result - screenshot is optional, elements are required.
+        val result = mutableMapOf<String, Any>(
           "status" to "success",
           "foreground_package" to screenInfo.foregroundPackage,
-          "screenshot_path" to screenshotPath,
           "interactive_elements" to elements,
           "element_count" to elements.size,
           "hint" to "Use uiAutomation with tap_element and element_index to tap an element, or type_text to enter text. After each uiAutomation action, call captureScreen again to see the updated screen.",
         )
+        if (screenshotPath != null) {
+          result["screenshot_path"] = screenshotPath
+        }
+        result as Map<String, Any>
       } catch (e: Exception) {
         Log.e(TAG, "captureScreen failed: ${e.message}", e)
         mapOf(
