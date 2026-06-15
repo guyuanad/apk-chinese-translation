@@ -98,13 +98,16 @@ object UiAutomationTools {
           }
         }
 
+        // Auto-detect search-related elements and build specific hint
+        val searchHint = buildSearchHint(elements)
+
         val result = mutableMapOf<String, Any>(
           "status" to "success",
           "foreground_package" to screenInfo.foregroundPackage,
           "interactive_elements" to elements,
           "element_count" to elements.size,
           "screen_summary" to summary,
-          "hint" to "Look at the screen_summary above. Find the search box (usually has 'editable' flag or label containing '搜索'). Call uiAutomation('tap_element', {\"element_index\": INDEX}) to tap it, then uiAutomation('type_text', {\"text\": \"YOUR QUERY\"}) to type.",
+          "hint" to searchHint,
         )
         if (screenshotPath != null) {
           result["screenshot_path"] = screenshotPath
@@ -399,5 +402,47 @@ object UiAutomationTools {
 
   private fun errorResult(action: String, message: String): Map<String, String> {
     return mapOf("status" to "error", "action" to action, "message" to message)
+  }
+
+  /**
+   * Scans elements for search-related items and builds a specific hint
+   * telling the model exactly which element_index to tap.
+   */
+  private fun buildSearchHint(elements: List<Map<String, Any>>): String {
+    val searchKeywords = listOf("搜索", "search", "Search", "查搜索", "搜一搜")
+
+    // Priority 1: Find editable search field
+    for (el in elements) {
+      val text = el["text"] as? String ?: ""
+      val desc = el["content_description"] as? String ?: ""
+      val editable = el["is_editable"] as? Boolean ?: false
+      val idx = el["index"] as? Int ?: continue
+      if (editable && (searchKeywords.any { text.contains(it) || desc.contains(it) })) {
+        return "Found search input at index $idx. Call uiAutomation('tap_element', {\"element_index\": $idx}) to tap it, then uiAutomation('type_text', {\"text\": \"YOUR QUERY\"}) to type your search."
+      }
+    }
+
+    // Priority 2: Find clickable search button/icon
+    for (el in elements) {
+      val text = el["text"] as? String ?: ""
+      val desc = el["content_description"] as? String ?: ""
+      val clickable = el["is_clickable"] as? Boolean ?: false
+      val idx = el["index"] as? Int ?: continue
+      if (clickable && (searchKeywords.any { text.contains(it) || desc.contains(it) })) {
+        return "Found search button at index $idx. Call uiAutomation('tap_element', {\"element_index\": $idx}) to tap it, then call captureScreen() again to see the search page."
+      }
+    }
+
+    // Priority 3: Find any editable field (might be a search box without label)
+    for (el in elements) {
+      val editable = el["is_editable"] as? Boolean ?: false
+      val idx = el["index"] as? Int ?: continue
+      if (editable) {
+        return "Found input field at index $idx. Call uiAutomation('tap_element', {\"element_index\": $idx}) to tap it, then uiAutomation('type_text', {\"text\": \"YOUR QUERY\"}) to type."
+      }
+    }
+
+    // Fallback: generic hint
+    return "Look at the screen_summary above. Find the element you need and call uiAutomation('tap_element', {\"element_index\": INDEX}) to tap it."
   }
 }
