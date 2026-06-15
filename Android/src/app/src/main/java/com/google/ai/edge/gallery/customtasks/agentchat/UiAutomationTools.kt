@@ -74,12 +74,37 @@ object UiAutomationTools {
         val elements = screenInfo.interactiveElements
 
         // 3. Build result - screenshot is optional, elements are required.
+        // Create a text summary that's easy for the model to understand
+        val summary = buildString {
+          append("Screen: ${screenInfo.foregroundPackage}\n")
+          append("Elements:\n")
+          for (el in elements) {
+            val idx = el["index"]
+            val text = el["text"] as? String ?: ""
+            val desc = el["content_description"] as? String ?: ""
+            val cls = el["class"] as? String ?: ""
+            val editable = el["is_editable"] as? Boolean ?: false
+            val clickable = el["is_clickable"] as? Boolean ?: false
+            val label = when {
+              text.isNotEmpty() -> text
+              desc.isNotEmpty() -> desc
+              else -> cls
+            }
+            val flags = buildList {
+              if (editable) add("editable")
+              if (clickable) add("clickable")
+            }.joinToString(",")
+            append("[$idx] $label ($flags)\n")
+          }
+        }
+
         val result = mutableMapOf<String, Any>(
           "status" to "success",
           "foreground_package" to screenInfo.foregroundPackage,
           "interactive_elements" to elements,
           "element_count" to elements.size,
-          "hint" to "Look at the elements above. Find the search box (usually has is_editable=true or content_description containing '搜索'). Call uiAutomation('tap_element', {\"element_index\": INDEX}) to tap it, then uiAutomation('type_text', {\"text\": \"YOUR QUERY\"}) to type. If you see a search icon, tap it first.",
+          "screen_summary" to summary,
+          "hint" to "Look at the screen_summary above. Find the search box (usually has 'editable' flag or label containing '搜索'). Call uiAutomation('tap_element', {\"element_index\": INDEX}) to tap it, then uiAutomation('type_text', {\"text\": \"YOUR QUERY\"}) to type.",
         )
         if (screenshotPath != null) {
           result["screenshot_path"] = screenshotPath

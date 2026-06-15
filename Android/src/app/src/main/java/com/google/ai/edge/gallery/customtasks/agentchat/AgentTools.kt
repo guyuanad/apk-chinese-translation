@@ -820,6 +820,14 @@ open class AgentTools(
       if (!checkCallLimit("runIntent")) {
         return@runBlocking mapOf("error" to "Too many calls to runIntent", "status" to "blocked")
       }
+      // Block repeated open_app if app was just opened and captureScreen hasn't been called
+      if (pendingAppOpen && intent == "open_app") {
+        return@runBlocking mapOf(
+          "status" to "error",
+          "action" to intent,
+          "message" to "App already opened. You MUST call captureScreen() first to see the screen before doing anything else. Do NOT call runIntent again."
+        )
+      }
       withToolLogging("runIntent") {
         runIntentInternal(intent, parameters)
       }
@@ -851,7 +859,7 @@ open class AgentTools(
     if (intent == "open_app" && res == "succeeded") {
       pendingAppOpen = true
       lastCaptureScreenTime = 0L
-      return result + ("hint" to "App opened successfully. You MUST now call captureScreen() to see the app's UI. Do NOT use searchWeb or any other tool. Only captureScreen() is allowed next.")
+      return result + ("hint" to "App opened successfully. You MUST now call captureScreen() to see the app's UI. Do NOT call runIntent again. Do NOT use searchWeb. Only captureScreen() is allowed next.")
     }
     return result
   }
