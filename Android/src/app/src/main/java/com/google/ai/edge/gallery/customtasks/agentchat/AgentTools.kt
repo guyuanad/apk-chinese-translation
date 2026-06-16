@@ -987,7 +987,7 @@ open class AgentTools(
         val searchScreenResult = UiAutomationTools.captureScreen(context)
         val searchElements = searchScreenResult["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
 
-        // Find editable input field in search page
+        // Find input field - try editable first, then any focusable element
         var inputIdx: Int? = null
         for (el in searchElements) {
           val editable = el["is_editable"] as? Boolean ?: false
@@ -995,6 +995,17 @@ open class AgentTools(
           if (editable) {
             inputIdx = idx
             break
+          }
+        }
+        // If no editable field, look for EditText-like class names
+        if (inputIdx == null) {
+          for (el in searchElements) {
+            val cls = el["class"] as? String ?: ""
+            val idx = el["index"] as? Int ?: continue
+            if (cls.contains("EditText") || cls.contains("AutoComplete") || cls.contains("SearchView")) {
+              inputIdx = idx
+              break
+            }
           }
         }
         writeLog("D", TAG, "searchInApp Step 6: Found ${searchElements.size} elements on search page, inputIdx=$inputIdx")
@@ -1005,10 +1016,11 @@ open class AgentTools(
           UiAutomationTools.executeUiAction(context, "tap_element", "{\"element_index\": $inputIdx}")
           delay(500)
         } else {
-          writeLog("D", TAG, "searchInApp Step 7: No input field found, typing directly")
+          writeLog("D", TAG, "searchInApp Step 7: No input field found in element list, will try direct accessibility input")
         }
 
-        // Step 8: Type the query (now supports Chinese via accessibility ACTION_SET_TEXT)
+        // Step 8: Type the query - use accessibility ACTION_SET_TEXT directly
+        // This bypasses the shell `input text` limitation and works with Chinese
         writeLog("D", TAG, "searchInApp Step 8: Typing query: $query")
         _actionChannel.send(SkillProgressAgentAction(
           label = "Typing search query: $query",
@@ -1016,16 +1028,24 @@ open class AgentTools(
           addItemTitle = "Type search query",
           addItemDescription = "Typing: $query"
         ))
-        val typeResult = UiAutomationTools.executeUiAction(context, "type_text", "{\"text\": \"$escapedQuery\"}")
-        writeLog("D", TAG, "searchInApp Step 8 result: ${typeResult["status"]} - ${typeResult["details"] ?: typeResult["message"]}")
-        if (typeResult["status"] != "success") {
-          pendingAppOpen = false
-          lastCaptureScreenTime = System.currentTimeMillis()
-          return@withToolLogging mapOf(
-            "status" to "error",
-            "step" to "type_text",
-            "message" to "Failed to type query: ${typeResult["message"]}"
-          )
+
+        // Try direct accessibility type first (finds input node by class, not just is_editable flag)
+        val accessibilityTyped = UiAutomationTools.typeTextViaAccessibility(query)
+        writeLog("D", TAG, "searchInApp Step 8: typeTextViaAccessibility result=$accessibilityTyped")
+
+        if (!accessibilityTyped) {
+          // Fallback to the executeUiAction type_text which has its own fallback chain
+          val typeResult = UiAutomationTools.executeUiAction(context, "type_text", "{\"text\": \"$escapedQuery\"}")
+          writeLog("D", TAG, "searchInApp Step 8 fallback result: ${typeResult["status"]} - ${typeResult["details"] ?: typeResult["message"]}")
+          if (typeResult["status"] != "success") {
+            pendingAppOpen = false
+            lastCaptureScreenTime = System.currentTimeMillis()
+            return@withToolLogging mapOf(
+              "status" to "error",
+              "step" to "type_text",
+              "message" to "Failed to type query: ${typeResult["message"]}"
+            )
+          }
         }
 
         // Step 9: Find and tap the search/submit button, or press Enter

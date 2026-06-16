@@ -486,6 +486,77 @@ object UiAutomationTools {
   }
 
   /**
+   * Types text into the currently focused input field using Accessibility ACTION_SET_TEXT.
+   * This works for Chinese and all Unicode characters.
+   * Returns true if text was successfully set, false otherwise.
+   */
+  fun typeTextViaAccessibility(text: String): Boolean {
+    val service = UiAutomationServiceHolder.instance ?: return false
+    try {
+      val rootNode = service.rootInActiveWindow ?: return false
+
+      // Method 1: Find the currently focused input node
+      val focusedNode = rootNode.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
+      if (focusedNode != null) {
+        Log.d(TAG, "Found focused node: class=${focusedNode.className}, editable=${focusedNode.isEditable}, text=${focusedNode.text}")
+        // Try ACTION_SET_TEXT on the focused node
+        if (focusedNode.isEditable || focusedNode.className?.toString()?.contains("EditText") == true || focusedNode.isFocusable) {
+          val args = Bundle()
+          args.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
+          val result = focusedNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)
+          Log.d(TAG, "ACTION_SET_TEXT on focused node: result=$result")
+          focusedNode.recycle()
+          if (result) return true
+        }
+        focusedNode.recycle()
+      }
+
+      // Method 2: Search for any editable or EditText-like node
+      val candidateNode = findInputNode(rootNode)
+      if (candidateNode != null) {
+        Log.d(TAG, "Found input node: class=${candidateNode.className}, editable=${candidateNode.isEditable}")
+        // Focus it first
+        candidateNode.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
+        Thread.sleep(200)
+        val args = Bundle()
+        args.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
+        val result = candidateNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)
+        Log.d(TAG, "ACTION_SET_TEXT on found node: result=$result")
+        candidateNode.recycle()
+        if (result) return true
+      }
+
+    } catch (e: Exception) {
+      Log.e(TAG, "typeTextViaAccessibility failed: ${e.message}", e)
+    }
+    return false
+  }
+
+  /**
+   * Recursively searches for an input/EditText node in the accessibility tree.
+   */
+  private fun findInputNode(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+    // Check if this node is an input field
+    val className = node.className?.toString() ?: ""
+    if (node.isEditable || className.contains("EditText") || className.contains("AutoComplete") || className.contains("SearchView")) {
+      val rect = Rect()
+      node.getBoundsInScreen(rect)
+      if (rect.width() > 0 && rect.height() > 0) {
+        return AccessibilityNodeInfo.obtain(node)
+      }
+    }
+
+    // Recurse into children
+    for (i in 0 until node.childCount) {
+      val child = node.getChild(i) ?: continue
+      val result = findInputNode(child)
+      child.recycle()
+      if (result != null) return result
+    }
+    return null
+  }
+
+  /**
    * Finds the index of a search-related element in the list of interactive elements.
    * Returns null if no search element is found.
    * Priority: editable search field > clickable search button > any editable field.
