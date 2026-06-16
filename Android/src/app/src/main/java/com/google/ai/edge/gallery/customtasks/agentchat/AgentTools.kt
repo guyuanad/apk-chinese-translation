@@ -1048,39 +1048,32 @@ open class AgentTools(
           }
         }
 
-        // Step 9: Find and tap the search/submit button, or press Enter
+        // Step 9: Submit the search
         delay(800)
         writeLog("D", TAG, "searchInApp Step 9: Looking for search submit button")
-        val postTypeScreen = UiAutomationTools.captureScreen(context)
-        val postTypeElements = postTypeScreen["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
-
-        // Look for a "搜索" submit button (not the search icon we already tapped, but the submit button)
-        val submitKeywords = listOf("搜索", "搜素", "search", "Search", "确定", "完成", "发送")
         var submitted = false
-        for (el in postTypeElements) {
-          val text = el["text"] as? String ?: ""
-          val desc = el["content_description"] as? String ?: ""
-          val clickable = el["is_clickable"] as? Boolean ?: false
-          val editable = el["is_editable"] as? Boolean ?: false
-          val idx = el["index"] as? Int ?: continue
-          // Skip the input field itself (editable), only look for clickable buttons
-          if (!editable && clickable && submitKeywords.any { text == it || desc == it }) {
-            writeLog("D", TAG, "searchInApp Step 9: Found submit button '$text' at index $idx, tapping it")
-            UiAutomationTools.executeUiAction(context, "tap_element", "{\"element_index\": $idx}")
-            submitted = true
-            break
-          }
+
+        // Method 1: Direct accessibility tree search for submit button
+        // This finds buttons that aren't in our interactive elements list
+        val directClickResult = UiAutomationTools.findAndClickSubmitButton(query)
+        writeLog("D", TAG, "searchInApp Step 9: findAndClickSubmitButton result=$directClickResult")
+        if (directClickResult) {
+          submitted = true
         }
 
+        // Method 2: Look in the element list for submit button
         if (!submitted) {
-          // Also try: look for IME action button (search action on keyboard)
+          val postTypeScreen = UiAutomationTools.captureScreen(context)
+          val postTypeElements = postTypeScreen["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
+          val submitKeywords = listOf("搜索", "搜素", "搜索一下", "search", "Search", "确定", "完成", "发送")
           for (el in postTypeElements) {
             val text = el["text"] as? String ?: ""
             val desc = el["content_description"] as? String ?: ""
             val clickable = el["is_clickable"] as? Boolean ?: false
+            val editable = el["is_editable"] as? Boolean ?: false
             val idx = el["index"] as? Int ?: continue
-            if (clickable && (desc.contains("搜索") || desc.contains("Search") || text.contains("搜索"))) {
-              writeLog("D", TAG, "searchInApp Step 9: Found keyboard search button at index $idx, tapping it")
+            if (!editable && clickable && submitKeywords.any { text == it || desc == it }) {
+              writeLog("D", TAG, "searchInApp Step 9: Found submit button '$text' at index $idx, tapping it")
               UiAutomationTools.executeUiAction(context, "tap_element", "{\"element_index\": $idx}")
               submitted = true
               break
@@ -1088,6 +1081,7 @@ open class AgentTools(
           }
         }
 
+        // Method 3: Press Enter
         if (!submitted) {
           writeLog("D", TAG, "searchInApp Step 9: No submit button found, pressing Enter")
           UiAutomationTools.executeUiAction(context, "keyevent", "{\"keycode\": \"KEYCODE_ENTER\"}")
@@ -1110,16 +1104,28 @@ open class AgentTools(
           editable && text.contains(query)
         }
 
-        if (stillOnInputPage && !submitted) {
-          // Still on input page and we used Enter - try IME search action
-          writeLog("D", TAG, "searchInApp: Still on input page, trying IME search action")
+        if (stillOnInputPage) {
+          // Still on input page - try different submit methods
+          writeLog("D", TAG, "searchInApp: Still on input page, trying alternate submit methods")
+          // Try KEYCODE_SEARCH
           UiAutomationTools.executeUiAction(context, "keyevent", "{\"keycode\": \"KEYCODE_SEARCH\"}")
           delay(2000)
-        } else if (stillOnInputPage && submitted) {
-          // We tapped submit but still on input page - try Enter as well
-          writeLog("D", TAG, "searchInApp: Submit button didn't work, trying Enter")
-          UiAutomationTools.executeUiAction(context, "keyevent", "{\"keycode\": \"KEYCODE_ENTER\"}")
-          delay(2000)
+
+          // Check again
+          val recheckScreen = UiAutomationTools.captureScreen(context)
+          val recheckElements = recheckScreen["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
+          val stillStuck = recheckElements.any { el ->
+            val editable = el["is_editable"] as? Boolean ?: false
+            val text = el["text"] as? String ?: ""
+            editable && text.contains(query)
+          }
+
+          if (stillStuck) {
+            // Try direct accessibility submit again (UI might have changed)
+            writeLog("D", TAG, "searchInApp: Still stuck, trying findAndClickSubmitButton again")
+            UiAutomationTools.findAndClickSubmitButton(query)
+            delay(2000)
+          }
         }
 
         // Clean up state

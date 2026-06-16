@@ -557,6 +557,65 @@ object UiAutomationTools {
   }
 
   /**
+   * Searches the entire accessibility tree for a search submit button and clicks it.
+   * This bypasses the element list and finds nodes that might not be reported
+   * as clickable/editable/focusable but are still tappable.
+   *
+   * Looks for nodes with text or contentDescription matching "搜索", "搜索一下", "Search", etc.
+   * that are NOT the input field (i.e., don't contain the query text as editable).
+   *
+   * Returns true if a button was found and clicked, false otherwise.
+   */
+  fun findAndClickSubmitButton(queryText: String): Boolean {
+    val service = UiAutomationServiceHolder.instance ?: return false
+    try {
+      val rootNode = service.rootInActiveWindow ?: return false
+      val result = findAndClickSubmitNode(rootNode, queryText)
+      return result
+    } catch (e: Exception) {
+      Log.e(TAG, "findAndClickSubmitButton failed: ${e.message}", e)
+    }
+    return false
+  }
+
+  private fun findAndClickSubmitNode(node: AccessibilityNodeInfo, queryText: String): Boolean {
+    val text = node.text?.toString() ?: ""
+    val desc = node.contentDescription?.toString() ?: ""
+    val submitKeywords = listOf("搜索", "搜素", "搜索一下", "search", "Search", "确定", "完成")
+
+    // Check if this node looks like a submit button
+    val matchesKeyword = submitKeywords.any { text == it || desc == it }
+    val isNotInputField = !(node.isEditable && text.contains(queryText))
+
+    if (matchesKeyword && isNotInputField) {
+      // Try clicking this node
+      if (node.isClickable) {
+        val clicked = node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+        Log.d(TAG, "Clicked submit node: text='$text', desc='$desc', result=$clicked")
+        if (clicked) return true
+      }
+      // Try clicking the parent if this node isn't clickable
+      val parent = node.parent
+      if (parent != null) {
+        if (parent.isClickable) {
+          val clicked = parent.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+          Log.d(TAG, "Clicked parent of submit node: result=$clicked")
+          if (clicked) return true
+        }
+      }
+    }
+
+    // Recurse into children
+    for (i in 0 until node.childCount) {
+      val child = node.getChild(i) ?: continue
+      val result = findAndClickSubmitNode(child, queryText)
+      child.recycle()
+      if (result) return true
+    }
+    return false
+  }
+
+  /**
    * Finds the index of a search-related element in the list of interactive elements.
    * Returns null if no search element is found.
    * Priority: editable search field > clickable search button > any editable field.
