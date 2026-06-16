@@ -572,9 +572,11 @@ object UiAutomationTools {
       val rootNode = service.rootInActiveWindow ?: return false
 
       // Debug: dump all nodes with text to find what's available
-      Log.d(TAG, "=== DUMP: Looking for submit button, query='$queryText' ===")
-      dumpNodesWithText(rootNode, 0)
-      Log.d(TAG, "=== END DUMP ===")
+      val dumpResult = StringBuilder()
+      dumpResult.append("=== DUMP: Looking for submit button, query='$queryText' ===\n")
+      dumpNodesWithText(rootNode, 0, dumpResult)
+      dumpResult.append("=== END DUMP ===")
+      Log.d(TAG, dumpResult.toString())
 
       val result = findAndClickSubmitNode(rootNode, queryText)
       if (result) return true
@@ -592,16 +594,16 @@ object UiAutomationTools {
   }
 
   /** Debug: dump all nodes that have text or contentDescription */
-  private fun dumpNodesWithText(node: AccessibilityNodeInfo, depth: Int) {
+  private fun dumpNodesWithText(node: AccessibilityNodeInfo, depth: Int, sb: StringBuilder) {
     val text = node.text?.toString() ?: ""
     val desc = node.contentDescription?.toString() ?: ""
     if (text.isNotEmpty() || desc.isNotEmpty()) {
       val indent = "  ".repeat(depth)
-      Log.d(TAG, "$indent Node: text='$text', desc='$desc', clickable=${node.isClickable}, editable=${node.isEditable}, class=${node.className}")
+      sb.append("$indent Node: text='$text', desc='$desc', clickable=${node.isClickable}, editable=${node.isEditable}, class=${node.className}\n")
     }
     for (i in 0 until node.childCount) {
       val child = node.getChild(i) ?: continue
-      dumpNodesWithText(child, depth + 1)
+      dumpNodesWithText(child, depth + 1, sb)
       child.recycle()
     }
   }
@@ -617,12 +619,17 @@ object UiAutomationTools {
     val inputRect = Rect()
     inputNode.getBoundsInScreen(inputRect)
     val inputRight = inputRect.right
-    val inputCenterY = (inputRect.top + inputRect.bottom) / 2
+    val inputTop = inputRect.top
+    val inputBottom = inputRect.bottom
+    val inputCenterY = (inputTop + inputBottom) / 2
+    val inputHeight = inputBottom - inputTop
     inputNode.recycle()
 
-    Log.d(TAG, "Input field bounds: right=$inputRight, centerY=$inputCenterY")
+    Log.d(TAG, "Input field bounds: right=$inputRight, centerY=$inputCenterY, height=$inputHeight")
 
     // Find all clickable elements and pick the one closest to the right of the input
+    // The submit button must be at the SAME vertical position (within 1.5x input height)
+    // and close horizontally (within 500px of input's right edge)
     val candidates = mutableListOf<Pair<AccessibilityNodeInfo, Int>>()
     collectClickableNodes(rootNode, candidates)
 
@@ -632,16 +639,25 @@ object UiAutomationTools {
     for ((node, _) in candidates) {
       val rect = Rect()
       node.getBoundsInScreen(rect)
-      // Must be to the right of the input field and at roughly the same vertical position
-      if (rect.left >= inputRight - 50 && Math.abs((rect.top + rect.bottom) / 2 - inputCenterY) < 200) {
-        val distance = rect.left - inputRight
-        if (distance in 0..bestDistance) {
-          bestDistance = distance
-          bestNode?.recycle()
-          bestNode = node
-        } else {
-          node.recycle()
-        }
+      val nodeCenterY = (rect.top + rect.bottom) / 2
+      val verticalDistance = Math.abs(nodeCenterY - inputCenterY)
+
+      // Must be to the right of the input field
+      if (rect.left < inputRight - 20) continue
+
+      // Must be at roughly the same vertical position (within 1.5x input height)
+      // This filters out suggestion items that are below the search bar
+      if (verticalDistance > inputHeight * 1.5) continue
+
+      // Must be close horizontally (within 500px)
+      val horizontalDistance = rect.left - inputRight
+      if (horizontalDistance > 500) continue
+
+      if (horizontalDistance in 0..bestDistance) {
+        bestDistance = horizontalDistance
+        bestNode?.recycle()
+        bestNode = node
+        Log.d(TAG, "Candidate: text='${node.text}', desc='${node.contentDescription}', rect=(${rect.left},${rect.top},${rect.right},${rect.bottom}), hDist=$horizontalDistance, vDist=$verticalDistance")
       } else {
         node.recycle()
       }
@@ -653,14 +669,19 @@ object UiAutomationTools {
       val x = (rect.left + rect.right) / 2
       val y = (rect.top + rect.bottom) / 2
       Log.d(TAG, "Clicking element right of input at ($x, $y), text=${bestNode.text}, desc=${bestNode.contentDescription}")
-      bestNode.recycle()
 
       // Try accessibility click first
       val clicked = bestNode.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-      if (clicked) return true
+      Log.d(TAG, "ACTION_CLICK result=$clicked")
+      if (clicked) {
+        bestNode.recycle()
+        return true
+      }
 
       // Fallback to coordinate tap
+      bestNode.recycle()
       val tapResult = execShellCommand("input tap $x $y")
+      Log.d(TAG, "Coordinate tap result=$tapResult")
       return tapResult == 0
     }
 
