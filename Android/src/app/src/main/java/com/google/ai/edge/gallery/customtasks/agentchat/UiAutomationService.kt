@@ -124,7 +124,7 @@ class UiAutomationService : AccessibilityService() {
    * @param maxElements Maximum number of elements to collect (default 200).
    * @return List of element info maps.
    */
-  fun getInteractiveElements(maxDepth: Int = 5, maxElements: Int = 200): List<Map<String, Any>> {
+  fun getInteractiveElements(maxDepth: Int = 15, maxElements: Int = 200): List<Map<String, Any>> {
     val root = rootNode ?: return emptyList()
     val elements = mutableListOf<Map<String, Any>>()
     traverseNode(root, elements, maxDepth, 0, maxElements)
@@ -153,7 +153,7 @@ class UiAutomationService : AccessibilityService() {
     // Re-traverse to get the node at the given index
     val root = rootNode ?: return null
     val nodes = mutableListOf<AccessibilityNodeInfo>()
-    collectInteractiveNodes(root, nodes, 5, 0, 200)
+    collectInteractiveNodes(root, nodes, 15, 0, 200)
     if (index < 0 || index >= nodes.size) return null
     return nodes[index]
   }

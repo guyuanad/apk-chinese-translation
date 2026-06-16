@@ -1028,25 +1028,79 @@ open class AgentTools(
           )
         }
 
-        // Step 9: Press Enter to search
-        delay(500)
-        writeLog("D", TAG, "searchInApp Step 9: Pressing Enter")
-        _actionChannel.send(SkillProgressAgentAction(
-          label = "Searching for '$query'...",
-          inProgress = true,
-          addItemTitle = "Press Enter to search",
-          addItemDescription = "Submitting search"
-        ))
-        UiAutomationTools.executeUiAction(context, "keyevent", "{\"keycode\": \"KEYCODE_ENTER\"}")
+        // Step 9: Find and tap the search/submit button, or press Enter
+        delay(800)
+        writeLog("D", TAG, "searchInApp Step 9: Looking for search submit button")
+        val postTypeScreen = UiAutomationTools.captureScreen(context)
+        val postTypeElements = postTypeScreen["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
+
+        // Look for a "搜索" submit button (not the search icon we already tapped, but the submit button)
+        val submitKeywords = listOf("搜索", "搜素", "search", "Search", "确定", "完成", "发送")
+        var submitted = false
+        for (el in postTypeElements) {
+          val text = el["text"] as? String ?: ""
+          val desc = el["content_description"] as? String ?: ""
+          val clickable = el["is_clickable"] as? Boolean ?: false
+          val editable = el["is_editable"] as? Boolean ?: false
+          val idx = el["index"] as? Int ?: continue
+          // Skip the input field itself (editable), only look for clickable buttons
+          if (!editable && clickable && submitKeywords.any { text == it || desc == it }) {
+            writeLog("D", TAG, "searchInApp Step 9: Found submit button '$text' at index $idx, tapping it")
+            UiAutomationTools.executeUiAction(context, "tap_element", "{\"element_index\": $idx}")
+            submitted = true
+            break
+          }
+        }
+
+        if (!submitted) {
+          // Also try: look for IME action button (search action on keyboard)
+          for (el in postTypeElements) {
+            val text = el["text"] as? String ?: ""
+            val desc = el["content_description"] as? String ?: ""
+            val clickable = el["is_clickable"] as? Boolean ?: false
+            val idx = el["index"] as? Int ?: continue
+            if (clickable && (desc.contains("搜索") || desc.contains("Search") || text.contains("搜索"))) {
+              writeLog("D", TAG, "searchInApp Step 9: Found keyboard search button at index $idx, tapping it")
+              UiAutomationTools.executeUiAction(context, "tap_element", "{\"element_index\": $idx}")
+              submitted = true
+              break
+            }
+          }
+        }
+
+        if (!submitted) {
+          writeLog("D", TAG, "searchInApp Step 9: No submit button found, pressing Enter")
+          UiAutomationTools.executeUiAction(context, "keyevent", "{\"keycode\": \"KEYCODE_ENTER\"}")
+        }
 
         // Step 10: Wait for results
-        writeLog("D", TAG, "searchInApp Step 10: Waiting 2s for results")
-        delay(2000)
+        writeLog("D", TAG, "searchInApp Step 10: Waiting 3s for results")
+        delay(3000)
 
         // Step 11: Capture final screen to verify
         writeLog("D", TAG, "searchInApp Step 11: Capturing final screen to verify")
         val finalScreen = UiAutomationTools.captureScreen(context)
         val finalSummary = finalScreen["screen_summary"] as? String ?: ""
+
+        // Check if we're still on the search input page (search not submitted)
+        val finalElements = finalScreen["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
+        val stillOnInputPage = finalElements.any { el ->
+          val editable = el["is_editable"] as? Boolean ?: false
+          val text = el["text"] as? String ?: ""
+          editable && text.contains(query)
+        }
+
+        if (stillOnInputPage && !submitted) {
+          // Still on input page and we used Enter - try IME search action
+          writeLog("D", TAG, "searchInApp: Still on input page, trying IME search action")
+          UiAutomationTools.executeUiAction(context, "keyevent", "{\"keycode\": \"KEYCODE_SEARCH\"}")
+          delay(2000)
+        } else if (stillOnInputPage && submitted) {
+          // We tapped submit but still on input page - try Enter as well
+          writeLog("D", TAG, "searchInApp: Submit button didn't work, trying Enter")
+          UiAutomationTools.executeUiAction(context, "keyevent", "{\"keycode\": \"KEYCODE_ENTER\"}")
+          delay(2000)
+        }
 
         // Clean up state
         pendingAppOpen = false
@@ -1059,7 +1113,7 @@ open class AgentTools(
           addItemDescription = "Searched for '$query' in $appName"
         ))
 
-        writeLog("D", TAG, "searchInApp completed successfully for '$query' in $appName")
+        writeLog("D", TAG, "searchInApp completed for '$query' in $appName")
 
         mapOf(
           "status" to "success",
