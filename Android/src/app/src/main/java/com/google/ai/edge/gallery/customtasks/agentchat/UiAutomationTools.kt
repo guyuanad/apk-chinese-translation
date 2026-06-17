@@ -579,21 +579,30 @@ object UiAutomationTools {
       Log.d(TAG, dumpResult.toString())
 
       // Strategy 1: Find "搜索" text node and tap at its coordinates
-      // Don't use ACTION_CLICK (which may click wrong ancestor), just use coordinates
       val submitCoords = findSubmitButtonCoordinates(rootNode, queryText)
       if (submitCoords != null) {
         val (x, y) = submitCoords
-        Log.d(TAG, "Found submit button coordinates: ($x, $y), tapping there")
+        Log.d(TAG, "Strategy 1: Found submit button coordinates: ($x, $y), tapping there")
         val tapResult = execShellCommand("input tap $x $y")
         if (tapResult == 0) return true
       }
 
-      // Strategy 2: Find input field and tap at calculated position
-      // Douyin's "搜索" button is always right after the input field in the same row
+      // Strategy 2: Use screen dimensions to calculate submit button position
+      // This is the most reliable approach for Douyin and similar apps
+      // where the submit button is not in the accessibility tree
+      val screenCoords = calculateSubmitButtonFromScreen(service)
+      if (screenCoords != null) {
+        val (x, y) = screenCoords
+        Log.d(TAG, "Strategy 2: Calculated submit position from screen: ($x, $y), tapping there")
+        val tapResult = execShellCommand("input tap $x $y")
+        if (tapResult == 0) return true
+      }
+
+      // Strategy 3: Find input field bounds from element list and calculate
       val inputCoords = findInputFieldAndCalculateSubmit(rootNode, queryText)
       if (inputCoords != null) {
         val (x, y) = inputCoords
-        Log.d(TAG, "Calculated submit button position: ($x, $y), tapping there")
+        Log.d(TAG, "Strategy 3: Calculated from input field: ($x, $y), tapping there")
         val tapResult = execShellCommand("input tap $x $y")
         if (tapResult == 0) return true
       }
@@ -603,6 +612,47 @@ object UiAutomationTools {
       Log.e(TAG, "findAndClickSubmitButton failed: ${e.message}", e)
     }
     return false
+  }
+
+  /**
+   * Calculate the submit button position from screen dimensions.
+   * In Douyin and most Chinese apps, the search page has a fixed layout:
+   * - Status bar at top (~70px)
+   * - Search bar below status bar (~100px height)
+   * - Input field on the left ~75% of the bar
+   * - "搜索" submit button on the right ~25% of the bar
+   *
+   * The submit button center is approximately at:
+   *   x = screenWidth * 0.88
+   *   y = 70 + 50 = ~120 (status bar + half of search bar)
+   */
+  private fun calculateSubmitButtonFromScreen(service: UiAutomationService): Pair<Int, Int>? {
+    try {
+      val displayMetrics = service.resources?.displayMetrics
+      if (displayMetrics != null) {
+        val screenWidth = displayMetrics.widthPixels
+        val screenHeight = displayMetrics.heightPixels
+        val density = displayMetrics.density
+
+        // Status bar height is typically 24dp-25dp = ~70-75px at 3x density
+        val statusBarHeight = Math.round(25 * density)
+
+        // Search bar is typically 44-48dp tall
+        val searchBarHeight = Math.round(48 * density)
+
+        // Submit button is at the right side of the search bar
+        // In Douyin: the "搜索" button takes up the right ~20% of the search bar
+        val buttonX = screenWidth - Math.round(60 * density)  // ~60dp from right edge
+        val buttonY = statusBarHeight + searchBarHeight / 2   // Center of search bar
+
+        Log.d(TAG, "Screen: ${screenWidth}x${screenHeight}, density=$density, statusBar=$statusBarHeight, searchBar=$searchBarHeight")
+        Log.d(TAG, "Calculated submit button: ($buttonX, $buttonY)")
+        return Pair(buttonX, buttonY)
+      }
+    } catch (e: Exception) {
+      Log.e(TAG, "calculateSubmitButtonFromScreen failed: ${e.message}", e)
+    }
+    return null
   }
 
   /**
