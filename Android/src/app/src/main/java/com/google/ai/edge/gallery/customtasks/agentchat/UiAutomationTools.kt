@@ -612,6 +612,10 @@ object UiAutomationTools {
    * Fallback: find the input field containing the query text,
    * then find and click the nearest clickable element to its right.
    * This works for Douyin where the "搜索" button is to the right of the input.
+   *
+   * CRITICAL: The candidate must be in the SAME ROW as the input field.
+   * We check that the candidate's vertical range overlaps with the input's
+   * vertical range, which filters out suggestion items below the search bar.
    */
   private fun findAndClickRightOfInput(rootNode: AccessibilityNodeInfo, queryText: String): Boolean {
     // Find the input field
@@ -625,39 +629,47 @@ object UiAutomationTools {
     val inputHeight = inputBottom - inputTop
     inputNode.recycle()
 
-    Log.d(TAG, "Input field bounds: right=$inputRight, centerY=$inputCenterY, height=$inputHeight")
+    Log.d(TAG, "Input field bounds: left=${inputRect.left}, top=$inputTop, right=$inputRight, bottom=$inputBottom, height=$inputHeight")
 
-    // Find all clickable elements and pick the one closest to the right of the input
-    // The submit button must be at the SAME vertical position (within 1.5x input height)
-    // and close horizontally (within 500px of input's right edge)
+    // Strategy 1: Find clickable elements in the SAME ROW as the input field
+    // "Same row" means the candidate's vertical center is within the input's
+    // top and bottom bounds (with small tolerance)
     val candidates = mutableListOf<Pair<AccessibilityNodeInfo, Int>>()
     collectClickableNodes(rootNode, candidates)
 
     var bestNode: AccessibilityNodeInfo? = null
     var bestDistance = Int.MAX_VALUE
 
+    Log.d(TAG, "Checking ${candidates.size} clickable nodes for submit button...")
+
     for ((node, _) in candidates) {
       val rect = Rect()
       node.getBoundsInScreen(rect)
       val nodeCenterY = (rect.top + rect.bottom) / 2
-      val verticalDistance = Math.abs(nodeCenterY - inputCenterY)
 
       // Must be to the right of the input field
-      if (rect.left < inputRight - 20) continue
+      if (rect.left < inputRight - 20) {
+        Log.d(TAG, "  SKIP (left of input): text='${node.text}', rect.left=${rect.left} < inputRight=$inputRight")
+        continue
+      }
 
-      // Must be at roughly the same vertical position (within 1.5x input height)
-      // This filters out suggestion items that are below the search bar
-      if (verticalDistance > inputHeight * 1.5) continue
+      // CRITICAL: Must be in the SAME ROW - node center must be within input's vertical bounds
+      // This is much tighter than "within 1.5x height" and filters out suggestions
+      if (nodeCenterY < inputTop - 10 || nodeCenterY > inputBottom + 10) {
+        Log.d(TAG, "  SKIP (different row): text='${node.text}', centerY=$nodeCenterY not in [$inputTop, $inputBottom]")
+        continue
+      }
 
       // Must be close horizontally (within 500px)
       val horizontalDistance = rect.left - inputRight
       if (horizontalDistance > 500) continue
 
+      Log.d(TAG, "  CANDIDATE: text='${node.text}', desc='${node.contentDescription}', rect=(${rect.left},${rect.top},${rect.right},${rect.bottom}), hDist=$horizontalDistance")
+
       if (horizontalDistance in 0..bestDistance) {
         bestDistance = horizontalDistance
         bestNode?.recycle()
         bestNode = node
-        Log.d(TAG, "Candidate: text='${node.text}', desc='${node.contentDescription}', rect=(${rect.left},${rect.top},${rect.right},${rect.bottom}), hDist=$horizontalDistance, vDist=$verticalDistance")
       } else {
         node.recycle()
       }
@@ -685,7 +697,20 @@ object UiAutomationTools {
       return tapResult == 0
     }
 
-    return false
+    // Strategy 2: If no element found in the same row, tap at a calculated position
+    // Douyin's submit button is always at the right edge of the search bar
+    // The search bar typically ends about 20-30px from the right edge of the screen
+    // We can estimate the button position from the input field bounds
+    Log.d(TAG, "No candidate found in same row, trying calculated position")
+    val displayMetrics = android.util.DisplayMetrics()
+    // Use input field width to estimate screen width
+    // The input field is typically about 70% of screen width
+    val estimatedScreenWidth = (inputRight - inputRect.left) * 100 / 70
+    val buttonX = estimatedScreenWidth - 60  // 60px from right edge
+    val buttonY = inputCenterY
+    Log.d(TAG, "Tapping at calculated position: ($buttonX, $buttonY), estimatedScreenWidth=$estimatedScreenWidth")
+    val tapResult = execShellCommand("input tap $buttonX $buttonY")
+    return tapResult == 0
   }
 
   /** Find a node by its text content */
