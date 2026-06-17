@@ -578,19 +578,116 @@ object UiAutomationTools {
       dumpResult.append("=== END DUMP ===")
       Log.d(TAG, dumpResult.toString())
 
-      val result = findAndClickSubmitNode(rootNode, queryText)
-      if (result) return true
+      // Strategy 1: Find "搜索" text node and tap at its coordinates
+      // Don't use ACTION_CLICK (which may click wrong ancestor), just use coordinates
+      val submitCoords = findSubmitButtonCoordinates(rootNode, queryText)
+      if (submitCoords != null) {
+        val (x, y) = submitCoords
+        Log.d(TAG, "Found submit button coordinates: ($x, $y), tapping there")
+        val tapResult = execShellCommand("input tap $x $y")
+        if (tapResult == 0) return true
+      }
 
-      // Fallback: find the input field and click the element to its right
-      // (Douyin's submit button is always to the right of the search bar)
-      val inputFieldResult = findAndClickRightOfInput(rootNode, queryText)
-      if (inputFieldResult) return true
+      // Strategy 2: Find input field and tap at calculated position
+      // Douyin's "搜索" button is always right after the input field in the same row
+      val inputCoords = findInputFieldAndCalculateSubmit(rootNode, queryText)
+      if (inputCoords != null) {
+        val (x, y) = inputCoords
+        Log.d(TAG, "Calculated submit button position: ($x, $y), tapping there")
+        val tapResult = execShellCommand("input tap $x $y")
+        if (tapResult == 0) return true
+      }
 
       return false
     } catch (e: Exception) {
       Log.e(TAG, "findAndClickSubmitButton failed: ${e.message}", e)
     }
     return false
+  }
+
+  /**
+   * Find a "搜索" text node in the accessibility tree and return its center coordinates.
+   * Only considers nodes that are in the same row as the input field (not suggestions below).
+   * Returns null if not found.
+   */
+  private fun findSubmitButtonCoordinates(rootNode: AccessibilityNodeInfo, queryText: String): Pair<Int, Int>? {
+    val submitKeywords = listOf("搜索", "搜素", "搜索一下", "search", "Search", "确定", "完成")
+
+    // First find the input field to know which row to look in
+    val inputNode = findNodeByText(rootNode, queryText, true)
+    var inputTop = 0
+    var inputBottom = Int.MAX_VALUE
+    if (inputNode != null) {
+      val inputRect = Rect()
+      inputNode.getBoundsInScreen(inputRect)
+      inputTop = inputRect.top
+      inputBottom = inputRect.bottom
+      inputNode.recycle()
+      Log.d(TAG, "Input field row: top=$inputTop, bottom=$inputBottom")
+    }
+
+    // Search for submit text node
+    return findSubmitTextNodeCoords(rootNode, submitKeywords, queryText, inputTop, inputBottom)
+  }
+
+  private fun findSubmitTextNodeCoords(
+    node: AccessibilityNodeInfo,
+    keywords: List<String>,
+    queryText: String,
+    inputTop: Int,
+    inputBottom: Int,
+  ): Pair<Int, Int>? {
+    val text = node.text?.toString() ?: ""
+    val desc = node.contentDescription?.toString() ?: ""
+    val matchesKeyword = keywords.any { text == it || desc == it }
+    val isNotInputField = !(node.isEditable && text.contains(queryText))
+
+    if (matchesKeyword && isNotInputField) {
+      val rect = Rect()
+      node.getBoundsInScreen(rect)
+      val centerY = (rect.top + rect.bottom) / 2
+
+      // Must be in the same row as the input field (if we found one)
+      if (inputTop > 0 && (centerY < inputTop - 20 || centerY > inputBottom + 20)) {
+        Log.d(TAG, "SKIP submit node (different row): text='$text', centerY=$centerY, row=[$inputTop,$inputBottom]")
+      } else {
+        val x = (rect.left + rect.right) / 2
+        val y = centerY
+        Log.d(TAG, "Found submit node coords: text='$text', desc='$desc', pos=($x,$y), rect=(${rect.left},${rect.top},${rect.right},${rect.bottom})")
+        return Pair(x, y)
+      }
+    }
+
+    for (i in 0 until node.childCount) {
+      val child = node.getChild(i) ?: continue
+      val result = findSubmitTextNodeCoords(child, keywords, queryText, inputTop, inputBottom)
+      child.recycle()
+      if (result != null) return result
+    }
+    return null
+  }
+
+  /**
+   * Find the input field and calculate where the submit button should be.
+   * In Douyin, the "搜索" button is right after the input field in the action bar.
+   * We tap at (inputRight + offset, inputCenterY).
+   */
+  private fun findInputFieldAndCalculateSubmit(rootNode: AccessibilityNodeInfo, queryText: String): Pair<Int, Int>? {
+    val inputNode = findNodeByText(rootNode, queryText, true) ?: return null
+    val inputRect = Rect()
+    inputNode.getBoundsInScreen(inputRect)
+    val inputRight = inputRect.right
+    val inputCenterY = (inputRect.top + inputRect.bottom) / 2
+    val inputWidth = inputRect.right - inputRect.left
+    inputNode.recycle()
+
+    // The submit button is typically 40-80px to the right of the input field
+    // and at the same vertical position
+    val buttonX = inputRight + 50
+    val buttonY = inputCenterY
+    Log.d(TAG, "Input field: right=$inputRight, width=$inputWidth, centerY=$inputCenterY")
+    Log.d(TAG, "Calculated submit position: ($buttonX, $buttonY)")
+    return Pair(buttonX, buttonY)
   }
 
   /** Debug: dump all nodes that have text or contentDescription */
@@ -608,111 +705,6 @@ object UiAutomationTools {
     }
   }
 
-  /**
-   * Fallback: find the input field containing the query text,
-   * then find and click the nearest clickable element to its right.
-   * This works for Douyin where the "搜索" button is to the right of the input.
-   *
-   * CRITICAL: The candidate must be in the SAME ROW as the input field.
-   * We check that the candidate's vertical range overlaps with the input's
-   * vertical range, which filters out suggestion items below the search bar.
-   */
-  private fun findAndClickRightOfInput(rootNode: AccessibilityNodeInfo, queryText: String): Boolean {
-    // Find the input field
-    val inputNode = findNodeByText(rootNode, queryText, true) ?: return false
-    val inputRect = Rect()
-    inputNode.getBoundsInScreen(inputRect)
-    val inputRight = inputRect.right
-    val inputTop = inputRect.top
-    val inputBottom = inputRect.bottom
-    val inputCenterY = (inputTop + inputBottom) / 2
-    val inputHeight = inputBottom - inputTop
-    inputNode.recycle()
-
-    Log.d(TAG, "Input field bounds: left=${inputRect.left}, top=$inputTop, right=$inputRight, bottom=$inputBottom, height=$inputHeight")
-
-    // Strategy 1: Find clickable elements in the SAME ROW as the input field
-    // "Same row" means the candidate's vertical center is within the input's
-    // top and bottom bounds (with small tolerance)
-    val candidates = mutableListOf<Pair<AccessibilityNodeInfo, Int>>()
-    collectClickableNodes(rootNode, candidates)
-
-    var bestNode: AccessibilityNodeInfo? = null
-    var bestDistance = Int.MAX_VALUE
-
-    Log.d(TAG, "Checking ${candidates.size} clickable nodes for submit button...")
-
-    for ((node, _) in candidates) {
-      val rect = Rect()
-      node.getBoundsInScreen(rect)
-      val nodeCenterY = (rect.top + rect.bottom) / 2
-
-      // Must be to the right of the input field
-      if (rect.left < inputRight - 20) {
-        Log.d(TAG, "  SKIP (left of input): text='${node.text}', rect.left=${rect.left} < inputRight=$inputRight")
-        continue
-      }
-
-      // CRITICAL: Must be in the SAME ROW - node center must be within input's vertical bounds
-      // This is much tighter than "within 1.5x height" and filters out suggestions
-      if (nodeCenterY < inputTop - 10 || nodeCenterY > inputBottom + 10) {
-        Log.d(TAG, "  SKIP (different row): text='${node.text}', centerY=$nodeCenterY not in [$inputTop, $inputBottom]")
-        continue
-      }
-
-      // Must be close horizontally (within 500px)
-      val horizontalDistance = rect.left - inputRight
-      if (horizontalDistance > 500) continue
-
-      Log.d(TAG, "  CANDIDATE: text='${node.text}', desc='${node.contentDescription}', rect=(${rect.left},${rect.top},${rect.right},${rect.bottom}), hDist=$horizontalDistance")
-
-      if (horizontalDistance in 0..bestDistance) {
-        bestDistance = horizontalDistance
-        bestNode?.recycle()
-        bestNode = node
-      } else {
-        node.recycle()
-      }
-    }
-
-    if (bestNode != null) {
-      val rect = Rect()
-      bestNode.getBoundsInScreen(rect)
-      val x = (rect.left + rect.right) / 2
-      val y = (rect.top + rect.bottom) / 2
-      Log.d(TAG, "Clicking element right of input at ($x, $y), text=${bestNode.text}, desc=${bestNode.contentDescription}")
-
-      // Try accessibility click first
-      val clicked = bestNode.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-      Log.d(TAG, "ACTION_CLICK result=$clicked")
-      if (clicked) {
-        bestNode.recycle()
-        return true
-      }
-
-      // Fallback to coordinate tap
-      bestNode.recycle()
-      val tapResult = execShellCommand("input tap $x $y")
-      Log.d(TAG, "Coordinate tap result=$tapResult")
-      return tapResult == 0
-    }
-
-    // Strategy 2: If no element found in the same row, tap at a calculated position
-    // Douyin's submit button is always at the right edge of the search bar
-    // The search bar typically ends about 20-30px from the right edge of the screen
-    // We can estimate the button position from the input field bounds
-    Log.d(TAG, "No candidate found in same row, trying calculated position")
-    val displayMetrics = android.util.DisplayMetrics()
-    // Use input field width to estimate screen width
-    // The input field is typically about 70% of screen width
-    val estimatedScreenWidth = (inputRight - inputRect.left) * 100 / 70
-    val buttonX = estimatedScreenWidth - 60  // 60px from right edge
-    val buttonY = inputCenterY
-    Log.d(TAG, "Tapping at calculated position: ($buttonX, $buttonY), estimatedScreenWidth=$estimatedScreenWidth")
-    val tapResult = execShellCommand("input tap $buttonX $buttonY")
-    return tapResult == 0
-  }
-
   /** Find a node by its text content */
   private fun findNodeByText(node: AccessibilityNodeInfo, targetText: String, mustBeEditable: Boolean): AccessibilityNodeInfo? {
     val text = node.text?.toString() ?: ""
@@ -726,77 +718,6 @@ object UiAutomationTools {
       if (result != null) return result
     }
     return null
-  }
-
-  /** Collect all clickable nodes in the tree */
-  private fun collectClickableNodes(node: AccessibilityNodeInfo, result: MutableList<Pair<AccessibilityNodeInfo, Int>>) {
-    if (node.isClickable) {
-      val rect = Rect()
-      node.getBoundsInScreen(rect)
-      if (rect.width() > 0 && rect.height() > 0) {
-        result.add(Pair(AccessibilityNodeInfo.obtain(node), result.size))
-      }
-    }
-    for (i in 0 until node.childCount) {
-      val child = node.getChild(i) ?: continue
-      collectClickableNodes(child, result)
-      child.recycle()
-    }
-  }
-
-  private fun findAndClickSubmitNode(node: AccessibilityNodeInfo, queryText: String): Boolean {
-    val text = node.text?.toString() ?: ""
-    val desc = node.contentDescription?.toString() ?: ""
-    val submitKeywords = listOf("搜索", "搜素", "搜索一下", "search", "Search", "确定", "完成")
-
-    // Check if this node looks like a submit button
-    val matchesKeyword = submitKeywords.any { text == it || desc == it }
-    val isNotInputField = !(node.isEditable && text.contains(queryText))
-
-    if (matchesKeyword && isNotInputField) {
-      Log.d(TAG, "Found submit node: text='$text', desc='$desc', clickable=${node.isClickable}, class=${node.className}")
-
-      // Strategy 1: Try ACTION_CLICK on the node itself
-      val clicked = node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-      Log.d(TAG, "ACTION_CLICK on submit node: result=$clicked")
-      if (clicked) return true
-
-      // Strategy 2: Try clicking ancestors (up to 5 levels)
-      var ancestor = node.parent
-      var level = 0
-      while (ancestor != null && level < 5) {
-        if (ancestor.isClickable) {
-          val ancestorClicked = ancestor.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-          Log.d(TAG, "Clicked ancestor level $level: result=$ancestorClicked")
-          ancestor.recycle()
-          if (ancestorClicked) return true
-        }
-        val nextAncestor = ancestor.parent
-        ancestor.recycle()
-        ancestor = nextAncestor
-        level++
-      }
-
-      // Strategy 3: Tap by coordinates (getBoundsInScreen)
-      val rect = Rect()
-      node.getBoundsInScreen(rect)
-      if (rect.width() > 0 && rect.height() > 0) {
-        val x = (rect.left + rect.right) / 2
-        val y = (rect.top + rect.bottom) / 2
-        Log.d(TAG, "Tapping submit node by coordinates: ($x, $y)")
-        val tapResult = execShellCommand("input tap $x $y")
-        if (tapResult == 0) return true
-      }
-    }
-
-    // Recurse into children
-    for (i in 0 until node.childCount) {
-      val child = node.getChild(i) ?: continue
-      val result = findAndClickSubmitNode(child, queryText)
-      child.recycle()
-      if (result) return true
-    }
-    return false
   }
 
   /**
