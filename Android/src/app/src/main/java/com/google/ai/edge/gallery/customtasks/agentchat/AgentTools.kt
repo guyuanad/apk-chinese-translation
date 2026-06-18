@@ -944,10 +944,27 @@ open class AgentTools(
 
         // === PHASE 3: Find and focus input field (with retry) ===
         var inputFocused = false
-        for (attempt in 1..3) {
+        for (attempt in 1..5) {
           writeLog("D", TAG, "searchInApp: Finding input field, attempt $attempt")
           val screen = UiAutomationTools.captureScreen(context)
           val elements = screen["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
+
+          // Check if we're actually on the search page (look for search-related elements)
+          val onSearchPage = elements.any { el ->
+            val text = el["text"] as? String ?: ""
+            val desc = el["content_description"] as? String ?: ""
+            val cls = el["class"] as? String ?: ""
+            (el["is_editable"] as? Boolean ?: false) ||
+            cls.contains("EditText") || cls.contains("SearchView") ||
+            text.contains("搜索") || desc.contains("搜索") ||
+            text.contains("猜你想搜") || text.contains("搜索历史")
+          }
+
+          if (!onSearchPage) {
+            writeLog("D", TAG, "searchInApp: Not on search page yet, waiting 1s")
+            delay(1000)
+            continue
+          }
 
           // Look for editable field
           val inputIdx = elements.indexOfFirst { el ->
@@ -961,7 +978,7 @@ open class AgentTools(
             inputFocused = true
             break
           }
-          writeLog("D", TAG, "searchInApp: Input field not found, retrying in 1s")
+          writeLog("D", TAG, "searchInApp: On search page but no input field found, retrying in 1s")
           delay(1000)
         }
         if (!inputFocused) {
@@ -1040,21 +1057,51 @@ open class AgentTools(
           }
           delay(2000)
 
-          // OBSERVE: Check if we're still on the input page
+          // OBSERVE: Check if search was actually submitted
+          // We verify by checking that the input field no longer has focus
+          // AND that we're not still on the search input page
           val checkScreen = UiAutomationTools.captureScreen(context)
           val checkElements = checkScreen["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
-          val stillOnInput = checkElements.any { el ->
+
+          // Check 1: Is there still an editable field with our query text?
+          val stillHasQueryInInput = checkElements.any { el ->
             val editable = el["is_editable"] as? Boolean ?: false
             val text = el["text"] as? String ?: ""
             editable && text.contains(query)
           }
 
-          if (!stillOnInput) {
+          // Check 2: Is there a "清空" (clear) button? This only appears on the input page
+          val hasClearButton = checkElements.any { el ->
+            val text = el["text"] as? String ?: ""
+            val desc = el["content_description"] as? String ?: ""
+            text.contains("清空") || desc.contains("清空")
+          }
+
+          // If we still have the query in input AND a clear button, we're still on input page
+          if (stillHasQueryInInput && hasClearButton) {
+            writeLog("D", TAG, "searchInApp: Still on input page after $strategyName (query in input + clear button), trying next strategy")
+          } else if (stillHasQueryInInput && !hasClearButton) {
+            // Query is in input but no clear button - might have navigated away and back
+            writeLog("D", TAG, "searchInApp: Query in input but no clear button after $strategyName, might have submitted, checking further")
+            // Wait a bit more and check again
+            delay(1000)
+            val recheckScreen = UiAutomationTools.captureScreen(context)
+            val recheckElements = recheckScreen["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
+            val recheckClear = recheckElements.any { el ->
+              val text = el["text"] as? String ?: ""
+              text.contains("清空")
+            }
+            if (recheckClear) {
+              writeLog("D", TAG, "searchInApp: Clear button reappeared, still on input page")
+            } else {
+              writeLog("D", TAG, "searchInApp: Search submitted successfully via $strategyName")
+              searchSubmitted = true
+              break
+            }
+          } else {
             writeLog("D", TAG, "searchInApp: Search submitted successfully via $strategyName")
             searchSubmitted = true
             break
-          } else {
-            writeLog("D", TAG, "searchInApp: Still on input page after $strategyName, trying next strategy")
           }
         }
 
