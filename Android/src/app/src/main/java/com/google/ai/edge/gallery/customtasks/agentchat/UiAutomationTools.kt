@@ -763,8 +763,13 @@ object UiAutomationTools {
   fun tapSubmitButtonByScreenPosition(): Boolean {
     try {
       val service = UiAutomationServiceHolder.instance
-      val displayMetrics = service?.resources?.displayMetrics
-        ?: context.resources.displayMetrics
+      if (service == null) {
+        Log.e(TAG, "tapSubmitButtonByScreenPosition: UiAutomationService not available")
+        return false
+      }
+
+      val displayMetrics = service.resources?.displayMetrics
+        ?: return false
 
       val screenWidth = displayMetrics.widthPixels
       val density = displayMetrics.density
