@@ -903,229 +903,163 @@ open class AgentTools(
         val escapedAppName = appName.replace("\\", "\\\\").replace("\"", "\\\"")
         val escapedQuery = query.replace("\\", "\\\\").replace("\"", "\\\"")
 
-        // Step 1: Open the app
-        writeLog("D", TAG, "searchInApp Step 1: Opening app $appName")
+        // === PHASE 1: Open the app ===
         _actionChannel.send(SkillProgressAgentAction(
-          label = "Opening $appName...",
-          inProgress = true,
-          addItemTitle = "Open $appName",
-          addItemDescription = "Opening app: $appName"
+          label = "Opening $appName...", inProgress = true,
+          addItemTitle = "Open $appName", addItemDescription = "Opening app: $appName"
         ))
         val openResult = runIntentInternal("open_app", "{\"package_name\": \"$escapedAppName\"}")
-        writeLog("D", TAG, "searchInApp Step 1 result: ${openResult["result"]}")
+        writeLog("D", TAG, "searchInApp: Open app result: ${openResult["result"]}")
         if (openResult["result"] != "succeeded") {
-          return@withToolLogging mapOf(
-            "status" to "error",
-            "step" to "open_app",
-            "message" to "Failed to open $appName. Error: ${openResult["result"]}"
-          )
+          return@withToolLogging mapOf("status" to "error", "step" to "open_app",
+            "message" to "Failed to open $appName. Error: ${openResult["result"]}")
         }
-
-        // Step 2: Wait for app to load
-        writeLog("D", TAG, "searchInApp Step 2: Waiting 3s for app to load")
         delay(3000)
 
-        // Step 3: Capture screen and find search element
-        writeLog("D", TAG, "searchInApp Step 3: Capturing screen to find search element")
-        _actionChannel.send(SkillProgressAgentAction(
-          label = "Finding search button in $appName...",
-          inProgress = true,
-          addItemTitle = "Find search button",
-          addItemDescription = "Scanning screen for search elements"
-        ))
-        val screenResult = UiAutomationTools.captureScreen(context)
-        if (screenResult["status"] != "success") {
-          return@withToolLogging mapOf(
-            "status" to "error",
-            "step" to "captureScreen",
-            "message" to "Failed to capture screen: ${screenResult["message"]}"
-          )
+        // === PHASE 2: Find and tap search button (with retry) ===
+        var searchTapped = false
+        for (attempt in 1..3) {
+          writeLog("D", TAG, "searchInApp: Finding search button, attempt $attempt")
+          val screen = UiAutomationTools.captureScreen(context)
+          val elements = screen["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
+          val searchIdx = UiAutomationTools.findSearchElementIndex(elements)
+
+          if (searchIdx != null) {
+            writeLog("D", TAG, "searchInApp: Found search element at index $searchIdx, tapping")
+            val tapResult = UiAutomationTools.executeUiAction(context, "tap_element", "{\"element_index\": $searchIdx}")
+            if (tapResult["status"] == "success") {
+              searchTapped = true
+              break
+            }
+          }
+          writeLog("D", TAG, "searchInApp: Search button not found or tap failed, retrying in 1s")
+          delay(1000)
         }
-
-        val elements = screenResult["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
-        val searchIdx = UiAutomationTools.findSearchElementIndex(elements)
-        writeLog("D", TAG, "searchInApp Step 3: Found ${elements.size} elements, searchIdx=$searchIdx")
-
-        if (searchIdx == null) {
-          // No search element found, clean up state and return error
-          pendingAppOpen = false
-          lastCaptureScreenTime = System.currentTimeMillis()
-          return@withToolLogging mapOf(
-            "status" to "error",
-            "step" to "find_search",
-            "message" to "Could not find search element in $appName. Try using captureScreen() and uiAutomation() manually.",
-            "screen_summary" to (screenResult["screen_summary"] ?: "")
-          )
+        if (!searchTapped) {
+          pendingAppOpen = false; lastCaptureScreenTime = System.currentTimeMillis()
+          return@withToolLogging mapOf("status" to "error", "step" to "find_search",
+            "message" to "Could not find search element in $appName after 3 attempts.")
         }
-
-        // Step 4: Tap search element
-        writeLog("D", TAG, "searchInApp Step 4: Tapping search element at index $searchIdx")
-        _actionChannel.send(SkillProgressAgentAction(
-          label = "Tapping search button...",
-          inProgress = true,
-          addItemTitle = "Tap search button",
-          addItemDescription = "Tapping element at index $searchIdx"
-        ))
-        val tapResult = UiAutomationTools.executeUiAction(context, "tap_element", "{\"element_index\": $searchIdx}")
-        writeLog("D", TAG, "searchInApp Step 4 result: ${tapResult["status"]} - ${tapResult["details"] ?: tapResult["message"]}")
-        if (tapResult["status"] != "success") {
-          pendingAppOpen = false
-          lastCaptureScreenTime = System.currentTimeMillis()
-          return@withToolLogging mapOf(
-            "status" to "error",
-            "step" to "tap_search",
-            "message" to "Failed to tap search button: ${tapResult["message"]}"
-          )
-        }
-
-        // Step 5: Wait for search page to load
-        writeLog("D", TAG, "searchInApp Step 5: Waiting 2s for search page to load")
         delay(2000)
 
-        // Step 6: Capture search page and look for input field
-        writeLog("D", TAG, "searchInApp Step 6: Capturing search page to find input field")
-        val searchScreenResult = UiAutomationTools.captureScreen(context)
-        val searchElements = searchScreenResult["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
+        // === PHASE 3: Find and focus input field (with retry) ===
+        var inputFocused = false
+        for (attempt in 1..3) {
+          writeLog("D", TAG, "searchInApp: Finding input field, attempt $attempt")
+          val screen = UiAutomationTools.captureScreen(context)
+          val elements = screen["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
 
-        // Find input field - try editable first, then any focusable element
-        var inputIdx: Int? = null
-        for (el in searchElements) {
-          val editable = el["is_editable"] as? Boolean ?: false
-          val idx = el["index"] as? Int ?: continue
-          if (editable) {
-            inputIdx = idx
+          // Look for editable field
+          val inputIdx = elements.indexOfFirst { el ->
+            (el["is_editable"] as? Boolean ?: false) ||
+            (el["class"] as? String ?: "").let { it.contains("EditText") || it.contains("SearchView") }
+          }
+          if (inputIdx >= 0) {
+            val idx = elements[inputIdx]["index"] as? Int ?: continue
+            writeLog("D", TAG, "searchInApp: Found input field at index $idx, tapping")
+            UiAutomationTools.executeUiAction(context, "tap_element", "{\"element_index\": $idx}")
+            inputFocused = true
             break
           }
+          writeLog("D", TAG, "searchInApp: Input field not found, retrying in 1s")
+          delay(1000)
         }
-        // If no editable field, look for EditText-like class names
-        if (inputIdx == null) {
-          for (el in searchElements) {
-            val cls = el["class"] as? String ?: ""
-            val idx = el["index"] as? Int ?: continue
-            if (cls.contains("EditText") || cls.contains("AutoComplete") || cls.contains("SearchView")) {
-              inputIdx = idx
-              break
-            }
-          }
+        if (!inputFocused) {
+          writeLog("D", TAG, "searchInApp: No input field found, will try direct accessibility input")
         }
-        writeLog("D", TAG, "searchInApp Step 6: Found ${searchElements.size} elements on search page, inputIdx=$inputIdx")
+        delay(500)
 
-        // Step 7: Tap input field if found
-        if (inputIdx != null) {
-          writeLog("D", TAG, "searchInApp Step 7: Tapping input field at index $inputIdx")
-          UiAutomationTools.executeUiAction(context, "tap_element", "{\"element_index\": $inputIdx}")
-          delay(500)
-        } else {
-          writeLog("D", TAG, "searchInApp Step 7: No input field found in element list, will try direct accessibility input")
-        }
-
-        // Step 8: Type the query - use accessibility ACTION_SET_TEXT directly
-        // This bypasses the shell `input text` limitation and works with Chinese
-        writeLog("D", TAG, "searchInApp Step 8: Typing query: $query")
+        // === PHASE 4: Type the query (with retry) ===
         _actionChannel.send(SkillProgressAgentAction(
-          label = "Typing search query: $query",
-          inProgress = true,
-          addItemTitle = "Type search query",
-          addItemDescription = "Typing: $query"
+          label = "Typing: $query", inProgress = true,
+          addItemTitle = "Type query", addItemDescription = "Typing: $query"
         ))
-
-        // Try direct accessibility type first (finds input node by class, not just is_editable flag)
-        val accessibilityTyped = UiAutomationTools.typeTextViaAccessibility(query)
-        writeLog("D", TAG, "searchInApp Step 8: typeTextViaAccessibility result=$accessibilityTyped")
-
-        if (!accessibilityTyped) {
-          // Fallback to the executeUiAction type_text which has its own fallback chain
-          val typeResult = UiAutomationTools.executeUiAction(context, "type_text", "{\"text\": \"$escapedQuery\"}")
-          writeLog("D", TAG, "searchInApp Step 8 fallback result: ${typeResult["status"]} - ${typeResult["details"] ?: typeResult["message"]}")
-          if (typeResult["status"] != "success") {
-            pendingAppOpen = false
-            lastCaptureScreenTime = System.currentTimeMillis()
-            return@withToolLogging mapOf(
-              "status" to "error",
-              "step" to "type_text",
-              "message" to "Failed to type query: ${typeResult["message"]}"
-            )
-          }
+        var textTyped = false
+        for (attempt in 1..3) {
+          writeLog("D", TAG, "searchInApp: Typing query, attempt $attempt")
+          val result = UiAutomationTools.typeTextViaAccessibility(query)
+          writeLog("D", TAG, "searchInApp: typeTextViaAccessibility result=$result")
+          if (result) { textTyped = true; break }
+          // Fallback
+          val fallback = UiAutomationTools.executeUiAction(context, "type_text", "{\"text\": \"$escapedQuery\"}")
+          writeLog("D", TAG, "searchInApp: type_text fallback result: ${fallback["status"]}")
+          if (fallback["status"] == "success") { textTyped = true; break }
+          delay(500)
+        }
+        if (!textTyped) {
+          pendingAppOpen = false; lastCaptureScreenTime = System.currentTimeMillis()
+          return@withToolLogging mapOf("status" to "error", "step" to "type_text",
+            "message" to "Failed to type query after 3 attempts.")
         }
 
-        // Step 9: Submit the search
+        // === PHASE 5: Submit search (observe-act loop with multiple strategies) ===
+        _actionChannel.send(SkillProgressAgentAction(
+          label = "Submitting search...", inProgress = true,
+          addItemTitle = "Submit search", addItemDescription = "Searching for: $query"
+        ))
         delay(800)
-        writeLog("D", TAG, "searchInApp Step 9: Looking for search submit button")
-        var submitted = false
 
-        // Method 1: Direct accessibility tree search for submit button
-        // This finds buttons that aren't in our interactive elements list
-        val directClickResult = UiAutomationTools.findAndClickSubmitButton(query)
-        writeLog("D", TAG, "searchInApp Step 9: findAndClickSubmitButton result=$directClickResult")
-        if (directClickResult) {
-          submitted = true
-        }
-
-        // Method 2: Look in the element list for submit button
-        if (!submitted) {
-          val postTypeScreen = UiAutomationTools.captureScreen(context)
-          val postTypeElements = postTypeScreen["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
-          val submitKeywords = listOf("搜索", "搜素", "搜索一下", "search", "Search", "确定", "完成", "发送")
-          for (el in postTypeElements) {
-            val text = el["text"] as? String ?: ""
-            val desc = el["content_description"] as? String ?: ""
-            val clickable = el["is_clickable"] as? Boolean ?: false
-            val editable = el["is_editable"] as? Boolean ?: false
-            val idx = el["index"] as? Int ?: continue
-            if (!editable && clickable && submitKeywords.any { text == it || desc == it }) {
-              writeLog("D", TAG, "searchInApp Step 9: Found submit button '$text' at index $idx, tapping it")
-              UiAutomationTools.executeUiAction(context, "tap_element", "{\"element_index\": $idx}")
-              submitted = true
-              break
+        val submitStrategies = listOf<Pair<String, suspend () -> Boolean>>(
+          "findAndClickSubmitButton" to { UiAutomationTools.findAndClickSubmitButton(query) },
+          "tapScreenCalculatedPosition" to { UiAutomationTools.tapSubmitButtonByScreenPosition() },
+          "pressEnter" to {
+            UiAutomationTools.executeUiAction(context, "keyevent", "{\"keycode\": \"KEYCODE_ENTER\"}")
+            true
+          },
+          "pressSearchKey" to {
+            UiAutomationTools.executeUiAction(context, "keyevent", "{\"keycode\": \"KEYCODE_SEARCH\"}")
+            true
+          },
+          "tapElementListSubmit" to {
+            val screen = UiAutomationTools.captureScreen(context)
+            val els = screen["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
+            val submitKeywords = listOf("搜索", "搜素", "搜索一下", "search", "Search", "确定", "完成", "发送")
+            for (el in els) {
+              val text = el["text"] as? String ?: ""
+              val desc = el["content_description"] as? String ?: ""
+              val clickable = el["is_clickable"] as? Boolean ?: false
+              val editable = el["is_editable"] as? Boolean ?: false
+              val idx = el["index"] as? Int ?: continue
+              if (!editable && clickable && submitKeywords.any { text == it || desc == it }) {
+                writeLog("D", TAG, "searchInApp: Found submit button '$text' at index $idx")
+                UiAutomationTools.executeUiAction(context, "tap_element", "{\"element_index\": $idx}")
+                return@to true
+              }
             }
+            false
+          },
+        )
+
+        var searchSubmitted = false
+        for ((strategyName, strategy) in submitStrategies) {
+          writeLog("D", TAG, "searchInApp: Trying submit strategy: $strategyName")
+          try {
+            strategy()
+          } catch (e: Exception) {
+            writeLog("D", TAG, "searchInApp: Strategy $strategyName threw: ${e.message}")
           }
-        }
-
-        // Method 3: Press Enter
-        if (!submitted) {
-          writeLog("D", TAG, "searchInApp Step 9: No submit button found, pressing Enter")
-          UiAutomationTools.executeUiAction(context, "keyevent", "{\"keycode\": \"KEYCODE_ENTER\"}")
-        }
-
-        // Step 10: Wait for results
-        writeLog("D", TAG, "searchInApp Step 10: Waiting 3s for results")
-        delay(3000)
-
-        // Step 11: Capture final screen to verify
-        writeLog("D", TAG, "searchInApp Step 11: Capturing final screen to verify")
-        val finalScreen = UiAutomationTools.captureScreen(context)
-        val finalSummary = finalScreen["screen_summary"] as? String ?: ""
-
-        // Check if we're still on the search input page (search not submitted)
-        val finalElements = finalScreen["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
-        val stillOnInputPage = finalElements.any { el ->
-          val editable = el["is_editable"] as? Boolean ?: false
-          val text = el["text"] as? String ?: ""
-          editable && text.contains(query)
-        }
-
-        if (stillOnInputPage) {
-          // Still on input page - try different submit methods
-          writeLog("D", TAG, "searchInApp: Still on input page, trying alternate submit methods")
-          // Try KEYCODE_SEARCH
-          UiAutomationTools.executeUiAction(context, "keyevent", "{\"keycode\": \"KEYCODE_SEARCH\"}")
           delay(2000)
 
-          // Check again
-          val recheckScreen = UiAutomationTools.captureScreen(context)
-          val recheckElements = recheckScreen["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
-          val stillStuck = recheckElements.any { el ->
+          // OBSERVE: Check if we're still on the input page
+          val checkScreen = UiAutomationTools.captureScreen(context)
+          val checkElements = checkScreen["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
+          val stillOnInput = checkElements.any { el ->
             val editable = el["is_editable"] as? Boolean ?: false
             val text = el["text"] as? String ?: ""
             editable && text.contains(query)
           }
 
-          if (stillStuck) {
-            // Try direct accessibility submit again (UI might have changed)
-            writeLog("D", TAG, "searchInApp: Still stuck, trying findAndClickSubmitButton again")
-            UiAutomationTools.findAndClickSubmitButton(query)
-            delay(2000)
+          if (!stillOnInput) {
+            writeLog("D", TAG, "searchInApp: Search submitted successfully via $strategyName")
+            searchSubmitted = true
+            break
+          } else {
+            writeLog("D", TAG, "searchInApp: Still on input page after $strategyName, trying next strategy")
           }
+        }
+
+        if (!searchSubmitted) {
+          writeLog("D", TAG, "searchInApp: All submit strategies failed, search may not have been submitted")
         }
 
         // Clean up state
@@ -1133,22 +1067,21 @@ open class AgentTools(
         lastCaptureScreenTime = System.currentTimeMillis()
 
         _actionChannel.send(SkillProgressAgentAction(
-          label = "Search completed!",
-          inProgress = false,
-          addItemTitle = "Search completed",
-          addItemDescription = "Searched for '$query' in $appName"
+          label = "Search completed!", inProgress = false,
+          addItemTitle = "Search completed", addItemDescription = "Searched for '$query' in $appName"
         ))
 
-        writeLog("D", TAG, "searchInApp completed for '$query' in $appName")
+        writeLog("D", TAG, "searchInApp completed for '$query' in $appName, submitted=$searchSubmitted")
 
         mapOf(
-          "status" to "success",
-          "message" to "Successfully searched for '$query' in $appName.",
+          "status" to if (searchSubmitted) "success" else "partial",
+          "message" to if (searchSubmitted) "Successfully searched for '$query' in $appName."
+            else "Typed '$query' in $appName but could not submit the search. Try calling captureScreen() and uiAutomation() to submit manually.",
           "app" to appName,
           "query" to query,
-          "search_completed" to true,
-          "final_screen_summary" to finalSummary,
-          "hint" to "Search completed. Call captureScreen() if you need to see the results, or use uiAutomation() to interact with the results."
+          "search_completed" to searchSubmitted,
+          "hint" to if (searchSubmitted) "Search completed. Call captureScreen() if you need to see the results."
+            else "Search not submitted. Call captureScreen() to see the current screen, then find and tap the search/submit button."
         )
       }
     }

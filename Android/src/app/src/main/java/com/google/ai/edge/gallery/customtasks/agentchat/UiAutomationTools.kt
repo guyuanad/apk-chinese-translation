@@ -755,6 +755,39 @@ object UiAutomationTools {
     }
   }
 
+  /**
+   * Tap the submit button using screen position calculation.
+   * Uses the Accessibility Service's context to get display metrics.
+   * Falls back to using the context if service.resources is null.
+   */
+  fun tapSubmitButtonByScreenPosition(): Boolean {
+    try {
+      val service = UiAutomationServiceHolder.instance
+      val displayMetrics = service?.resources?.displayMetrics
+        ?: context.resources.displayMetrics
+
+      val screenWidth = displayMetrics.widthPixels
+      val density = displayMetrics.density
+
+      // Status bar height is typically 24-25dp
+      val statusBarHeight = Math.round(25 * density)
+      // Search bar is typically 44-48dp tall
+      val searchBarHeight = Math.round(48 * density)
+
+      // Submit button is at the right side of the search bar
+      val buttonX = screenWidth - Math.round(60 * density)  // ~60dp from right edge
+      val buttonY = statusBarHeight + searchBarHeight / 2   // Center of search bar
+
+      Log.d(TAG, "tapSubmitButtonByScreenPosition: screen=${screenWidth}x${displayMetrics.heightPixels}, density=$density, tapping ($buttonX, $buttonY)")
+      val tapResult = execShellCommand("input tap $buttonX $buttonY")
+      Log.d(TAG, "tapSubmitButtonByScreenPosition: tap result=$tapResult")
+      return tapResult == 0
+    } catch (e: Exception) {
+      Log.e(TAG, "tapSubmitButtonByScreenPosition failed: ${e.message}", e)
+    }
+    return false
+  }
+
   /** Find a node by its text content */
   private fun findNodeByText(node: AccessibilityNodeInfo, targetText: String, mustBeEditable: Boolean): AccessibilityNodeInfo? {
     val text = node.text?.toString() ?: ""
