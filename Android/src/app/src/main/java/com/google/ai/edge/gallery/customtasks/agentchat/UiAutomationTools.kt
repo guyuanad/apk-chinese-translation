@@ -100,8 +100,8 @@ object UiAutomationTools {
           }
         }
 
-        // Auto-detect search-related elements and build specific hint
-        val searchHint = buildSearchHint(elements)
+        // Smart hint: analyze screen state and suggest next action
+        val smartHint = buildSmartHint(elements, screenInfo.foregroundPackage)
 
         val result = mutableMapOf<String, Any>(
           "status" to "success",
@@ -109,7 +109,7 @@ object UiAutomationTools {
           "interactive_elements" to elements,
           "element_count" to elements.size,
           "screen_summary" to summary,
-          "hint" to searchHint,
+          "hint" to smartHint,
         )
         if (screenshotPath != null) {
           result["screenshot_path"] = screenshotPath
@@ -854,6 +854,96 @@ object UiAutomationTools {
    * Scans elements for search-related items and builds a specific hint
    * telling the model exactly which element_index to tap.
    */
+  /**
+   * Smart hint generator - analyzes screen state and suggests the next action.
+   * This is the core of autonomous operation: the code does the thinking,
+   * the model just follows instructions.
+   */
+  private fun buildSmartHint(elements: List<Map<String, Any>>, foregroundPackage: String): String {
+    val searchKeywords = listOf("搜索", "search", "Search", "查搜索", "搜一搜")
+    val submitKeywords = listOf("搜索", "搜素", "搜索一下", "search", "Search", "确定", "完成", "发送")
+    val backKeywords = listOf("返回", "back", "Back")
+
+    // State 1: No app open (home screen or launcher)
+    if (foregroundPackage.isEmpty() || foregroundPackage.contains("launcher") || 
+        foregroundPackage.contains("nexuslauncher") || foregroundPackage.contains("googlequicksearchbox")) {
+      return "You are on the home screen. Call runIntent('open_app', {\"package_name\": \"APP_NAME\"}) to open an app."
+    }
+
+    // State 2: Search input page - there's an editable field
+    val editableElements = elements.filter { (it["is_editable"] as? Boolean ?: false) }
+    if (editableElements.isNotEmpty()) {
+      val inputEl = editableElements.first()
+      val inputIdx = inputEl["index"] as? Int ?: -1
+      val inputText = inputEl["text"] as? String ?: ""
+
+      // Sub-state 2a: Input field has text - suggest submitting
+      if (inputText.isNotEmpty()) {
+        // Look for submit button in element list
+        for (el in elements) {
+          val text = el["text"] as? String ?: ""
+          val desc = el["content_description"] as? String ?: ""
+          val clickable = el["is_clickable"] as? Boolean ?: false
+          val editable = el["is_editable"] as? Boolean ?: false
+          val idx = el["index"] as? Int ?: continue
+          if (!editable && clickable && submitKeywords.any { text == it || desc == it }) {
+            return "Text '$inputText' is in the input field. Found submit button '$text' at index $idx. Call uiAutomation('tap_element', {\"element_index\": $idx}) to submit."
+          }
+        }
+        // No submit button found in list - try Enter
+        return "Text '$inputText' is in the input field. Call uiAutomation('keyevent', {\"keycode\": \"KEYCODE_ENTER\"}) to submit the search."
+      }
+
+      // Sub-state 2b: Input field is empty - suggest typing
+      return "Found input field at index $inputIdx. Call uiAutomation('tap_element', {\"element_index\": $inputIdx}) to focus it, then uiAutomation('type_text', {\"text\": \"YOUR_QUERY\"}) to type."
+    }
+
+    // State 3: App page with search button - suggest tapping it
+    for (el in elements) {
+      val text = el["text"] as? String ?: ""
+      val desc = el["content_description"] as? String ?: ""
+      val clickable = el["is_clickable"] as? Boolean ?: false
+      val idx = el["index"] as? Int ?: continue
+      if (clickable && (searchKeywords.any { text.contains(it) || desc.contains(it) })) {
+        return "Found search button at index $idx. Call uiAutomation('tap_element', {\"element_index\": $idx}) to tap it, then call captureScreen() to see the search page."
+      }
+    }
+
+    // State 4: Results page - check if we see content that looks like results
+    val hasContentElements = elements.count { el ->
+      val text = el["text"] as? String ?: ""
+      val desc = el["content_description"] as? String ?: ""
+      text.isNotEmpty() && !backKeywords.any { text == it }
+    }
+    if (hasContentElements > 5) {
+      // Likely a content/results page
+      val contentSummary = elements.take(5).mapNotNull { el ->
+        val text = el["text"] as? String ?: ""
+        val desc = el["content_description"] as? String ?: ""
+        val idx = el["index"] as? Int ?: return@mapNotNull null
+        val label = if (text.isNotEmpty()) text else desc
+        if (label.isNotEmpty()) "[$idx] $label" else null
+      }.joinToString(", ")
+      return "You appear to be on a content page. Visible items: $contentSummary. If the task is complete, reply to the user. To interact, call uiAutomation('tap_element', {\"element_index\": INDEX}) or uiAutomation('scroll', {\"direction\": \"down\"}) to see more."
+    }
+
+    // State 5: Generic - list clickable elements for the model
+    val clickableElements = elements.filter { (it["is_clickable"] as? Boolean ?: false) }
+    if (clickableElements.isNotEmpty()) {
+      val topClickable = clickableElements.take(5).mapNotNull { el ->
+        val text = el["text"] as? String ?: ""
+        val desc = el["content_description"] as? String ?: ""
+        val idx = el["index"] as? Int ?: return@mapNotNull null
+        val label = if (text.isNotEmpty()) text else if (desc.isNotEmpty()) desc else el["class"] as? String ?: ""
+        if (label.isNotEmpty()) "[$idx] $label" else null
+      }.joinToString(", ")
+      return "Clickable elements: $topClickable. Call uiAutomation('tap_element', {\"element_index\": INDEX}) to tap one, or uiAutomation('scroll', {\"direction\": \"down\"}) to scroll."
+    }
+
+    // Fallback
+    return "Look at the screen_summary above. Call uiAutomation('tap_element', {\"element_index\": INDEX}) to tap an element, or uiAutomation('scroll', {\"direction\": \"down\"}) to scroll."
+  }
+
   private fun buildSearchHint(elements: List<Map<String, Any>>): String {
     val searchKeywords = listOf("搜索", "search", "Search", "查搜索", "搜一搜")
 

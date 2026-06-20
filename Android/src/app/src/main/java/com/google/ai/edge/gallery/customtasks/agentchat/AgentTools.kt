@@ -799,9 +799,40 @@ open class AgentTools(
         if (result["status"] == "success") {
           // Invalidate captureScreen time so model must call it again before next uiAutomation
           lastCaptureScreenTime = 0L
-          result + ("hint" to "Action completed. Call captureScreen() to see the updated screen before the next action.")
+
+          // Context-aware hint based on what action was just performed
+          val contextHint = when (action) {
+            "tap_element" -> {
+              val details = result["details"] as? String ?: ""
+              if (details.contains("Clicked element")) {
+                "Element tapped. The screen may have changed. Call captureScreen() NOW to see the new screen and get the next action hint."
+              } else {
+                "Action completed. Call captureScreen() to see the updated screen."
+              }
+            }
+            "type_text" -> {
+              "Text typed. Call captureScreen() NOW to verify the text was entered and get the next action hint (e.g., how to submit)."
+            }
+            "keyevent" -> {
+              "Key pressed. Call captureScreen() NOW to see if the screen changed (e.g., search results appeared)."
+            }
+            "scroll" -> {
+              "Scrolled. Call captureScreen() NOW to see the new content on screen."
+            }
+            "back" -> {
+              "Back pressed. Call captureScreen() NOW to see the previous screen."
+            }
+            "home" -> {
+              "Home pressed. Call captureScreen() NOW to see the home screen."
+            }
+            else -> {
+              "Action completed. Call captureScreen() to see the updated screen and get the next action hint."
+            }
+          }
+          result + ("hint" to contextHint)
         } else {
-          result
+          // On error, suggest capturing screen to reassess
+          result + ("hint" to "Action failed. Call captureScreen() to see the current screen state, then try a different approach.")
         }
       }
     }
