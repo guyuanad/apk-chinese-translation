@@ -867,7 +867,7 @@ object UiAutomationTools {
     // State 1: No app open (home screen or launcher)
     if (foregroundPackage.isEmpty() || foregroundPackage.contains("launcher") || 
         foregroundPackage.contains("nexuslauncher") || foregroundPackage.contains("googlequicksearchbox")) {
-      return "You are on the home screen. Call runIntent('open_app', {\"package_name\": \"APP_NAME\"}) to open an app."
+      return "TASK NOT DONE. You are on the home screen. Call runIntent('open_app', {\"package_name\": \"APP_NAME\"}) to open an app."
     }
 
     // State 2: Search input page - there's an editable field
@@ -887,15 +887,15 @@ object UiAutomationTools {
           val editable = el["is_editable"] as? Boolean ?: false
           val idx = el["index"] as? Int ?: continue
           if (!editable && clickable && submitKeywords.any { text == it || desc == it }) {
-            return "Text '$inputText' is in the input field. Found submit button '$text' at index $idx. Call uiAutomation('tap_element', {\"element_index\": $idx}) to submit."
+            return "TASK NOT DONE. Text '$inputText' is in the input field. Found submit button '$text' at index $idx. Call uiAutomation('tap_element', {\"element_index\": $idx}) NOW to submit."
           }
         }
         // No submit button found in list - try Enter
-        return "Text '$inputText' is in the input field. Call uiAutomation('keyevent', {\"keycode\": \"KEYCODE_ENTER\"}) to submit the search."
+        return "TASK NOT DONE. Text '$inputText' is in the input field. Call uiAutomation('keyevent', {\"keycode\": \"KEYCODE_ENTER\"}) NOW to submit the search."
       }
 
       // Sub-state 2b: Input field is empty - suggest typing
-      return "Found input field at index $inputIdx. Call uiAutomation('tap_element', {\"element_index\": $inputIdx}) to focus it, then uiAutomation('type_text', {\"text\": \"YOUR_QUERY\"}) to type."
+      return "TASK NOT DONE. Found input field at index $inputIdx. Call uiAutomation('tap_element', {\"element_index\": $inputIdx}) to focus it, then uiAutomation('type_text', {\"text\": \"YOUR_QUERY\"}) to type."
     }
 
     // State 3: App page with search button - suggest tapping it
@@ -905,7 +905,7 @@ object UiAutomationTools {
       val clickable = el["is_clickable"] as? Boolean ?: false
       val idx = el["index"] as? Int ?: continue
       if (clickable && (searchKeywords.any { text.contains(it) || desc.contains(it) })) {
-        return "Found search button at index $idx. Call uiAutomation('tap_element', {\"element_index\": $idx}) to tap it, then call captureScreen() to see the search page."
+        return "TASK NOT DONE. Found search button at index $idx. Call uiAutomation('tap_element', {\"element_index\": $idx}) NOW to tap it, then call captureScreen() to see the search page."
       }
     }
 
@@ -924,7 +924,7 @@ object UiAutomationTools {
         val label = if (text.isNotEmpty()) text else desc
         if (label.isNotEmpty()) "[$idx] $label" else null
       }.joinToString(", ")
-      return "You appear to be on a content page. Visible items: $contentSummary. If the task is complete, reply to the user. To interact, call uiAutomation('tap_element', {\"element_index\": INDEX}) or uiAutomation('scroll', {\"direction\": \"down\"}) to see more."
+      return "TASK MAY BE COMPLETE. You appear to be on a content page. Visible items: $contentSummary. If the task is complete, reply to the user. To interact more, call uiAutomation('tap_element', {\"element_index\": INDEX}) or uiAutomation('scroll', {\"direction\": \"down\"})."
     }
 
     // State 5: Generic - list clickable elements for the model
@@ -937,11 +937,11 @@ object UiAutomationTools {
         val label = if (text.isNotEmpty()) text else if (desc.isNotEmpty()) desc else el["class"] as? String ?: ""
         if (label.isNotEmpty()) "[$idx] $label" else null
       }.joinToString(", ")
-      return "Clickable elements: $topClickable. Call uiAutomation('tap_element', {\"element_index\": INDEX}) to tap one, or uiAutomation('scroll', {\"direction\": \"down\"}) to scroll."
+      return "TASK NOT DONE. Clickable elements: $topClickable. Call uiAutomation('tap_element', {\"element_index\": INDEX}) to tap one, or uiAutomation('scroll', {\"direction\": \"down\"}) to scroll."
     }
 
     // Fallback
-    return "Look at the screen_summary above. Call uiAutomation('tap_element', {\"element_index\": INDEX}) to tap an element, or uiAutomation('scroll', {\"direction\": \"down\"}) to scroll."
+    return "TASK NOT DONE. Call uiAutomation('tap_element', {\"element_index\": INDEX}) to tap an element, or uiAutomation('scroll', {\"direction\": \"down\"}) to scroll."
   }
 
   private fun buildSearchHint(elements: List<Map<String, Any>>): String {

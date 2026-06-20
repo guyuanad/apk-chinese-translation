@@ -157,7 +157,7 @@ open class AgentTools(
   }
 
   private val callCounts = ConcurrentHashMap<String, AtomicInteger>()
-  private val maxCallsPerTool = 10
+  private val maxCallsPerTool = 20
   private var lastCaptureScreenTime: Long = 0  // Track when captureScreen was last called
   private var pendingAppOpen: Boolean = false   // Track if an app was just opened and needs captureScreen
   private var lastOpenedAppName: String? = null // Track last opened app to prevent re-opening
@@ -915,10 +915,9 @@ open class AgentTools(
 
   @Tool(
     description =
-      "Open an app and search for something. Use this when the user wants to search in an app. " +
-        "This handles the ENTIRE flow automatically: open app → tap search button → type query → press enter. " +
-        "Example: searchInApp(\"抖音\", \"科技视频\"), searchInApp(\"小红书\", \"美食\"). " +
-        "ALWAYS prefer this over runIntent+captureScreen+uiAutomation for search tasks."
+      "Open an app and search for something. " +
+        "Example: searchInApp(\"抖音\", \"科技视频\"). " +
+        "NOTE: Prefer using runIntent+captureScreen+uiAutomation step by step for more control."
   )
   fun searchInApp(
     @ToolParam(description = "The app name to search in, e.g., '抖音', '小红书', '淘宝'")
