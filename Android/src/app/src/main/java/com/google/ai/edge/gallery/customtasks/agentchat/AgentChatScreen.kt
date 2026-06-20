@@ -265,6 +265,32 @@ fun AgentChatScreen(
           agentTools.resultWebviewToShow = null
         }
         updateProgressPanel(viewModel = viewModel, model = model, agentTools = agentTools)
+
+        // AUTO-CONTINUE: Check if task is complete, if not force model to continue
+        if (agentTools.taskStateTracker.shouldAutoContinue()) {
+          Log.d(TAG, "AUTO-CONTINUE: Task not complete, forcing model to continue (step ${agentTools.taskStateTracker.autoContinueCount}/${agentTools.taskStateTracker.maxAutoContinueSteps})")
+          val continuePrompt = agentTools.taskStateTracker.getContinuationPrompt()
+          viewModel.generateResponse(
+            model = model,
+            input = continuePrompt,
+            onFirstToken = { },
+            onDone = {
+              // Recursive auto-continue: check again after this continuation
+              if (agentTools.taskStateTracker.shouldAutoContinue()) {
+                Log.d(TAG, "AUTO-CONTINUE: Still not done after continuation, forcing again")
+                val nextPrompt = agentTools.taskStateTracker.getContinuationPrompt()
+                viewModel.generateResponse(
+                  model = model,
+                  input = nextPrompt,
+                  onFirstToken = { },
+                  onDone = { /* Stop recursion at 2 levels - the next onGenerateResponseDone will handle further */ },
+                  onError = { Log.e(TAG, "Auto-continue level 2 error: $it") },
+                )
+              }
+            },
+            onError = { Log.e(TAG, "Auto-continue error: $it") },
+          )
+        }
       }
     },
     onResetSessionClickedOverride = { task, _, initialMessages, clearHistory, onDone ->
@@ -753,6 +779,7 @@ private fun resetSessionWithCurrentSkillsAndMcps(
   clearHistory: Boolean = true,
 ) {
   val model = modelManagerViewModel.uiState.value.selectedModel
+  agentTools.resetCallCounts()
   val litertMessages = initialMessages.mapNotNull { chatMessage ->
     if (chatMessage is ChatMessageText) {
       if (chatMessage.side == ChatSide.USER) {

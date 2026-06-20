@@ -62,6 +62,123 @@ import java.util.Date
 private const val TAG = "DIAG"
 
 /**
+ * Tracks task state for the code-takes-over-loop mechanism.
+ * When the model stops outputting tool calls (outputs plain text instead),
+ * this tracker determines whether the task is actually complete or if
+ * the code should force-continue by feeding a prompt back to the model.
+ */
+class TaskStateTracker {
+  enum class TaskPhase {
+    IDLE, APP_OPENED, SCREEN_CAPTURED, ACTION_PERFORMED, TASK_COMPLETE
+  }
+
+  var phase: TaskPhase = TaskPhase.IDLE
+    private set
+
+  /** Ordered list of all tool calls in this session. */
+  private val toolCallHistory = mutableListOf<ToolCallRecord>()
+
+  /** The hint from the last captureScreen call. */
+  var lastHint: String = ""
+    private set
+
+  /** The last tool name that was called. */
+  var lastToolName: String = ""
+    private set
+
+  /** Whether the last tool call resulted in an error. */
+  var lastCallFailed: Boolean = false
+    private set
+
+  /** Maximum number of auto-continue steps to prevent infinite loops. */
+  var maxAutoContinueSteps: Int = 15
+
+  /** Number of times we've force-continued the model. */
+  var autoContinueCount: Int = 0
+    private set
+
+  data class ToolCallRecord(
+    val toolName: String,
+    val result: Map<String, Any>,
+    val timestamp: Long = System.currentTimeMillis()
+  )
+
+  /** Records a tool call and updates the task phase. */
+  fun recordToolCall(toolName: String, result: Map<String, Any>) {
+    val record = ToolCallRecord(toolName, result)
+    toolCallHistory.add(record)
+    lastToolName = toolName
+
+    val status = result["status"] as? String ?: ""
+    lastCallFailed = (status == "error" || status == "failed")
+
+    when (toolName) {
+      "captureScreen" -> {
+        phase = TaskPhase.SCREEN_CAPTURED
+        lastHint = result["hint"] as? String ?: ""
+      }
+      "uiAutomation" -> {
+        phase = TaskPhase.ACTION_PERFORMED
+      }
+      "runIntent" -> {
+        if (result["result"] as? String == "succeeded" && (result["action"] as? String) == "open_app") {
+          phase = TaskPhase.APP_OPENED
+        } else {
+          phase = TaskPhase.ACTION_PERFORMED
+        }
+      }
+    }
+  }
+
+  /** Returns true if the code should auto-continue the model. */
+  fun shouldAutoContinue(): Boolean {
+    // Don't auto-continue if we've hit the limit
+    if (autoContinueCount >= maxAutoContinueSteps) return false
+
+    // Don't auto-continue if there were no tool calls (model just said hello)
+    if (toolCallHistory.isEmpty()) return false
+
+    // Don't auto-continue if the last call failed (avoid infinite retry loops)
+    if (lastCallFailed) return false
+
+    // Don't auto-continue if the hint says task may be complete
+    if (lastHint.contains("TASK MAY BE COMPLETE")) return false
+
+    // Auto-continue if there were tool calls and the task isn't done
+    return true
+  }
+
+  /** Returns a prompt to force the model to continue the task. */
+  fun getContinuationPrompt(): String {
+    autoContinueCount++
+    return if (lastHint.isNotEmpty()) {
+      "The task is not done yet. Last hint: $lastHint. Call the appropriate tool now."
+    } else if (phase == TaskPhase.APP_OPENED) {
+      "You just opened an app. Call captureScreen() now to see the screen."
+    } else if (phase == TaskPhase.ACTION_PERFORMED) {
+      "You performed an action. Call captureScreen() now to see the result and get the next hint."
+    } else {
+      "Continue the task. Call captureScreen() to see the current screen state and get the next action hint."
+    }
+  }
+
+  /** Checks if the task appears to be done based on the last hint. */
+  fun isTaskComplete(): Boolean {
+    return lastHint.contains("TASK MAY BE COMPLETE")
+  }
+
+  /** Resets all state for a new conversation. */
+  fun reset() {
+    phase = TaskPhase.IDLE
+    toolCallHistory.clear()
+    lastHint = ""
+    lastToolName = ""
+    lastCallFailed = false
+    autoContinueCount = 0
+  }
+}
+
+/**
  * Tracks tool call statistics for debugging and analytics.
  * Thread-safe using ConcurrentHashMap and AtomicInteger.
  */
@@ -113,6 +230,7 @@ open class AgentTools(
 ) : ToolSet {
   lateinit var context: Context
   lateinit var taskId: String
+  val taskStateTracker = TaskStateTracker()
 
   // --- File logging support ---
   private var logFile: File? = null
@@ -182,6 +300,7 @@ open class AgentTools(
     lastCaptureScreenTime = 0
     pendingAppOpen = false
     lastOpenedAppName = null
+    taskStateTracker.reset()
     writeLog("D", TAG, "Tool call counts and state reset.")
   }
 
@@ -761,6 +880,7 @@ open class AgentTools(
           lastCaptureScreenTime = System.currentTimeMillis()
           pendingAppOpen = false
         }
+        taskStateTracker.recordToolCall("captureScreen", result)
         result
       }
     }
@@ -829,10 +949,14 @@ open class AgentTools(
               "Action completed. Call captureScreen() to see the updated screen and get the next action hint."
             }
           }
-          result + ("hint" to contextHint)
+          val resultWithHint = result + ("hint" to contextHint)
+          taskStateTracker.recordToolCall("uiAutomation", resultWithHint as Map<String, Any>)
+          resultWithHint
         } else {
           // On error, suggest capturing screen to reassess
-          result + ("hint" to "Action failed. Call captureScreen() to see the current screen state, then try a different approach.")
+          val resultWithHint = result + ("hint" to "Action failed. Call captureScreen() to see the current screen state, then try a different approach.")
+          taskStateTracker.recordToolCall("uiAutomation", resultWithHint as Map<String, Any>)
+          resultWithHint
         }
       }
     }
@@ -876,7 +1000,9 @@ open class AgentTools(
         }
       }
       withToolLogging("runIntent") {
-        runIntentInternal(intent, parameters)
+        val result = runIntentInternal(intent, parameters)
+        taskStateTracker.recordToolCall("runIntent", result as Map<String, Any>)
+        result
       }
     }
   }
@@ -913,16 +1039,9 @@ open class AgentTools(
     return result
   }
 
-  @Tool(
-    description =
-      "Open an app and search for something. " +
-        "Example: searchInApp(\"抖音\", \"科技视频\"). " +
-        "NOTE: Prefer using runIntent+captureScreen+uiAutomation step by step for more control."
-  )
+  @Deprecated("Use runIntent + captureScreen + uiAutomation step by step instead")
   fun searchInApp(
-    @ToolParam(description = "The app name to search in, e.g., '抖音', '小红书', '淘宝'")
     appName: String,
-    @ToolParam(description = "The search query, e.g., '科技视频', '美食', '手机'")
     query: String,
   ): Map<String, Any> {
     return runBlocking(Dispatchers.Default) {
