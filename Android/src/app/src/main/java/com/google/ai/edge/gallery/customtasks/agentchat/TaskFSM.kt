@@ -187,7 +187,7 @@ object FSMExecutor {
         // State: APP_OPENED → Find search button
         val searchResult = findAndTapSearchButton(context)
         if (searchResult.nextState == FSMState.ERROR) {
-            return FSMResult("partial", "已打开$app，但未找到搜索按钮。${searchResult.message}")
+            return FSMResult("partial", "已打开${app}，但未找到搜索按钮。${searchResult.message}")
         }
         delay(2000)
 
@@ -201,7 +201,7 @@ object FSMExecutor {
         // State: TEXT_ENTERED → Submit search
         val submitResult = submitSearch(context, query)
         if (submitResult.nextState == FSMState.ERROR) {
-            return FSMResult("partial", "已输入'$query'，但提交搜索失败。${submitResult.message}")
+            return FSMResult("partial", "已输入'${query}'，但提交搜索失败。${submitResult.message}")
         }
         delay(2000)
 
@@ -211,9 +211,9 @@ object FSMExecutor {
         return FSMResult(
             status = if (verifyResult.nextState == FSMState.RESULTS_PAGE) "success" else "partial",
             message = if (verifyResult.nextState == FSMState.RESULTS_PAGE)
-                "已在$app搜索'$query'。"
+                "已在${app}搜索'${query}'。"
             else
-                "已在$app搜索'$query'，但无法确认搜索结果页面。",
+                "已在${app}搜索'${query}'，但无法确认搜索结果页面。",
             data = mapOf("app" to app, "query" to query, "search_completed" to true)
         )
     }
@@ -236,7 +236,7 @@ object FSMExecutor {
 
         return FSMResult(
             status = if (!isOnHome) "success" else "partial",
-            message = if (!isOnHome) "已打开$app。" else "可能未成功打开$app。",
+            message = if (!isOnHome) "已打开${app}。" else "可能未成功打开${app}。",
             data = mapOf("app" to app, "foreground_package" to fgPackage)
         )
     }
@@ -260,19 +260,19 @@ object FSMExecutor {
         // Find and tap on contact
         val contactResult = findAndTapContact(context, contact)
         if (contactResult.nextState == FSMState.ERROR) {
-            return FSMResult("partial", "已打开$app，但未找到联系人'$contact'。${contactResult.message}")
+            return FSMResult("partial", "已打开${app}，但未找到联系人'${contact}'。${contactResult.message}")
         }
         delay(2000)
 
         // Type and send message
         val sendResult = typeAndSendMessage(context, message)
         if (sendResult.nextState == FSMState.ERROR) {
-            return FSMResult("partial", "已打开与'$contact'的对话，但发送消息失败。${sendResult.message}")
+            return FSMResult("partial", "已打开与'${contact}'的对话，但发送消息失败。${sendResult.message}")
         }
 
         return FSMResult(
             status = "success",
-            message = "已在$app向$contact发送消息：$message",
+            message = "已在${app}向${contact}发送消息：${message}",
             data = mapOf("app" to app, "contact" to contact, "message" to message, "sent" to true)
         )
     }
@@ -295,7 +295,7 @@ object FSMExecutor {
         // Find unread messages
         val unreadResult = findUnreadMessages(context)
         if (unreadResult.nextState == FSMState.ERROR) {
-            return FSMResult("partial", "已打开$app，但未找到未读消息。${unreadResult.message}")
+            return FSMResult("partial", "已打开${app}，但未找到未读消息。${unreadResult.message}")
         }
         delay(1500)
 
@@ -305,13 +305,13 @@ object FSMExecutor {
         // Return need_input status - the model needs to generate a reply
         return FSMResult(
             status = "need_input",
-            message = "在$app中发现新消息。请根据以下消息内容生成回复。",
+            message = "在${app}中发现新消息。请根据以下消息内容生成回复。",
             data = mapOf(
                 "app" to app,
                 "policy" to policy,
                 "messages" to (readResult.data["messages"] ?: emptyList<Any>()),
                 "contact" to (readResult.data["contact"] ?: ""),
-                "hint" to "请阅读上面的消息，然后用executeTask(\"send_reply\", {\"app\": \"$app\", \"contact\": \"联系人\", \"message\": \"你的回复\"})发送回复。"
+                "hint" to "请阅读上面的消息，然后用executeTask(\"send_reply\", {\"app\": \"${app}\", \"contact\": \"联系人\", \"message\": \"你的回复\"})发送回复。"
             )
         )
     }
@@ -336,7 +336,7 @@ object FSMExecutor {
                 // Need to find and tap contact
                 val contactResult = findAndTapContact(context, contact)
                 if (contactResult.nextState == FSMState.ERROR) {
-                    return FSMResult("partial", "未找到联系人'$contact'。${contactResult.message}")
+                    return FSMResult("partial", "未找到联系人'${contact}'。${contactResult.message}")
                 }
                 delay(1500)
             }
@@ -399,13 +399,13 @@ object FSMExecutor {
 
                 if (inputIdx >= 0) {
                     // For now, just report that we found the setting
-                    return FSMResult("success", "已打开$setting设置页面。请手动调整到$value。",
+                    return FSMResult("success", "已打开${setting}设置页面。请手动调整到${value}。",
                         mapOf("setting" to setting, "value" to value))
                 }
             }
         }
 
-        return FSMResult("partial", "已打开设置，但未找到'$setting'。",
+        return FSMResult("partial", "已打开设置，但未找到'${setting}'。",
             mapOf("setting" to setting, "value" to value))
     }
 
@@ -426,7 +426,7 @@ object FSMExecutor {
 
         return FSMResult(
             status = if (!isOnHome) "success" else "partial",
-            message = if (!isOnHome) "已打开$app。" else "可能未成功打开$app。",
+            message = if (!isOnHome) "已打开${app}。" else "可能未成功打开${app}。",
             data = mapOf("app" to app)
         )
     }
