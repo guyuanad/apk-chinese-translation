@@ -896,8 +896,10 @@ open class AgentTools(
         val params = try {
           val json = kotlinx.serialization.json.Json.parseToJsonElement(parameters).jsonObject
           json.mapValues { (_, v) ->
-            when {
-              v.isString -> v.toString().trim('"')
+            when (v) {
+              is kotlinx.serialization.json.JsonPrimitive -> {
+                if (v.isString) v.content else v.toString()
+              }
               else -> v.toString()
             }
           }
