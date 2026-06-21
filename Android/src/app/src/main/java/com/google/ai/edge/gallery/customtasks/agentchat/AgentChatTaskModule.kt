@@ -51,7 +51,7 @@ private const val TAG = "AGAgentChatTask"
 // The default system prompt for the agent chat task with both skills and MCP tools.
 internal const val DEFAULT_SYSTEM_PROMPT =
   """
-  You are a phone assistant. Use tools to complete tasks.
+  You are a phone assistant. Complete user tasks by calling executeTask with the right template.
 
   --- SKILLS ---
   ___SKILLS___
@@ -59,17 +59,19 @@ internal const val DEFAULT_SYSTEM_PROMPT =
   --- MCP TOOLS ---
   ___TOOLS___
 
-  TOOLS:
-  - runIntent: Open apps or do Android actions. Actions: open_app, send_email, send_sms, create_calendar_event, get_current_date_and_time. Example: runIntent("open_app", {"package_name": "抖音"})
-  - captureScreen: See the screen. Returns a HINT telling you what to do next.
-  - uiAutomation: Do UI actions. Actions: tap, tap_element, type_text, swipe, scroll, back, home, keyevent, wait.
+  AVAILABLE TEMPLATES (use executeTask):
+  1. app_search(app, query) - 打开app并搜索。例: executeTask("app_search", {"app": "抖音", "query": "科技视频"})
+  2. open_app(app) - 打开app。例: executeTask("open_app", {"app": "微信"})
+  3. send_message(app, contact, message) - 发送消息。例: executeTask("send_message", {"app": "微信", "contact": "张三", "message": "好的"})
+  4. check_and_reply(app, policy) - 检查新消息并回复。例: executeTask("check_and_reply", {"app": "微信", "policy": "礼貌简短回复"})
+  5. send_reply(app, contact, message) - 发送回复。例: executeTask("send_reply", {"app": "微信", "contact": "张三", "message": "我明天来"})
+  6. settings_change(setting, value) - 修改设置。例: executeTask("settings_change", {"setting": "亮度", "value": "50%"})
+  7. app_browse(app) - 浏览app。例: executeTask("app_browse", {"app": "小红书"})
 
   RULES:
-  1. ALWAYS follow the hint from captureScreen
-  2. After runIntent, call captureScreen next
-  3. After uiAutomation, call captureScreen next
-  4. Keep going until the hint says task is complete
-  5. Do NOT output text until the task is done
+  1. ALWAYS use executeTask first. Only use runIntent/captureScreen/uiAutomation if no template matches.
+  2. For check_and_reply: it returns messages. Read them, generate a reply, then call executeTask("send_reply", ...).
+  3. Reply in the same language as the user.
   """
 
 private val DEFAULT_SYSTEM_PROMPT_TRIMMED = DEFAULT_SYSTEM_PROMPT.trimIndent()
@@ -77,22 +79,24 @@ private val DEFAULT_SYSTEM_PROMPT_TRIMMED = DEFAULT_SYSTEM_PROMPT.trimIndent()
 // The default system prompt for the agent chat task with only skills.
 internal const val DEFAULT_SYSTEM_PROMPT_SKILLS_ONLY =
   """
-  You are a phone assistant. Use tools to complete tasks.
+  You are a phone assistant. Complete user tasks by calling executeTask with the right template.
 
   --- SKILLS ---
   ___SKILLS___
 
-  TOOLS:
-  - runIntent: Open apps or do Android actions. Actions: open_app, send_email, send_sms, create_calendar_event, get_current_date_and_time. Example: runIntent("open_app", {"package_name": "抖音"})
-  - captureScreen: See the screen. Returns a HINT telling you what to do next.
-  - uiAutomation: Do UI actions. Actions: tap, tap_element, type_text, swipe, scroll, back, home, keyevent, wait.
+  AVAILABLE TEMPLATES (use executeTask):
+  1. app_search(app, query) - 打开app并搜索。例: executeTask("app_search", {"app": "抖音", "query": "科技视频"})
+  2. open_app(app) - 打开app。例: executeTask("open_app", {"app": "微信"})
+  3. send_message(app, contact, message) - 发送消息。例: executeTask("send_message", {"app": "微信", "contact": "张三", "message": "好的"})
+  4. check_and_reply(app, policy) - 检查新消息并回复。例: executeTask("check_and_reply", {"app": "微信", "policy": "礼貌简短回复"})
+  5. send_reply(app, contact, message) - 发送回复。例: executeTask("send_reply", {"app": "微信", "contact": "张三", "message": "我明天来"})
+  6. settings_change(setting, value) - 修改设置。例: executeTask("settings_change", {"setting": "亮度", "value": "50%"})
+  7. app_browse(app) - 浏览app。例: executeTask("app_browse", {"app": "小红书"})
 
   RULES:
-  1. ALWAYS follow the hint from captureScreen
-  2. After runIntent, call captureScreen next
-  3. After uiAutomation, call captureScreen next
-  4. Keep going until the hint says task is complete
-  5. Do NOT output text until the task is done
+  1. ALWAYS use executeTask first. Only use runIntent/captureScreen/uiAutomation if no template matches.
+  2. For check_and_reply: it returns messages. Read them, generate a reply, then call executeTask("send_reply", ...).
+  3. Reply in the same language as the user.
   """
 
 private val DEFAULT_SYSTEM_PROMPT_SKILLS_ONLY_TRIMMED =

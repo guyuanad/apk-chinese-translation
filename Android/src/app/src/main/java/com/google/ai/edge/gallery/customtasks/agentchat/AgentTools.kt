@@ -866,6 +866,86 @@ open class AgentTools(
     return mapOf("result" to rawResult, "status" to "succeeded")
   }
 
+  // --- Template-based Task Execution ---
+
+  @Tool(
+    description =
+      "Execute a task using a predefined template. This is the PREFERRED way to complete tasks. " +
+        "Available templates:\n" +
+        "1. app_search(app, query) - 打开app并搜索内容\n" +
+        "2. open_app(app) - 打开一个app\n" +
+        "3. send_message(app, contact, message) - 在社交app中发送消息\n" +
+        "4. check_and_reply(app, policy) - 检查社交app的新消息并回复\n" +
+        "5. send_reply(app, contact, message) - 发送回复消息\n" +
+        "6. settings_change(setting, value) - 修改系统设置\n" +
+        "7. app_browse(app) - 打开app浏览内容\n" +
+        "If no template matches, use runIntent+captureScreen+uiAutomation instead."
+  )
+  fun executeTask(
+    @ToolParam(description = "Template name: app_search, open_app, send_message, check_and_reply, send_reply, settings_change, app_browse")
+    template: String,
+    @ToolParam(description = "JSON object with template parameters. e.g. {\"app\": \"抖音\", \"query\": \"科技视频\"}")
+    parameters: String,
+  ): Map<String, Any> {
+    return runBlocking(Dispatchers.Default) {
+      if (!checkCallLimit("executeTask")) {
+        return@runBlocking mapOf("error" to "Too many calls to executeTask", "status" to "blocked")
+      }
+      withToolLogging("executeTask") {
+        // Parse parameters
+        val params = try {
+          val json = kotlinx.serialization.json.Json.parseToJsonElement(parameters).jsonObject
+          json.mapValues { (_, v) ->
+            when {
+              v.isString -> v.toString().trim('"')
+              else -> v.toString()
+            }
+          }
+        } catch (e: Exception) {
+          writeLog("E", TAG, "executeTask: Failed to parse parameters: ${e.message}")
+          return@withToolLogging mapOf("status" to "error", "message" to "Invalid JSON parameters: ${e.message}")
+        }
+
+        writeLog("D", TAG, "executeTask: template=$template, params=$params")
+
+        // Send progress action
+        runBlocking(Dispatchers.Main) {
+          _actionChannel.send(
+            SkillProgressAgentAction(
+              label = "Executing task: $template",
+              inProgress = true,
+              addItemTitle = "Execute: $template",
+              addItemDescription = "Parameters: $params",
+            )
+          )
+        }
+
+        // Execute the FSM
+        val result = FSMExecutor.execute(context, template, params)
+
+        // Reset state tracking since FSM handled everything internally
+        pendingAppOpen = false
+        lastCaptureScreenTime = System.currentTimeMillis()
+
+        // Build result map
+        val resultMap = mutableMapOf<String, Any>(
+          "status" to result.status,
+          "message" to result.message,
+          "template" to template,
+        )
+        resultMap.putAll(result.data)
+
+        if (result.status == "need_input") {
+          resultMap["hint"] = result.data["hint"] ?: "请根据上面的消息生成回复，然后用executeTask(\"send_reply\", ...)发送。"
+        }
+
+        writeLog("D", TAG, "executeTask result: status=${result.status}, message=${result.message}")
+
+        resultMap as Map<String, Any>
+      }
+    }
+  }
+
   // --- UI Automation Tools ---
 
   @Tool(description = "Capture the current screen. Returns screenshot path, foreground app package name, and a list of interactive UI elements with their bounds, text, content description, and class name.")
