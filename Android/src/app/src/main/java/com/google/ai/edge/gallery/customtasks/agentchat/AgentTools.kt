@@ -870,16 +870,7 @@ open class AgentTools(
 
   @Tool(
     description =
-      "Execute a task using a predefined template. This is the PREFERRED way to complete tasks. " +
-        "Available templates:\n" +
-        "1. app_search(app, query) - 打开app并搜索内容\n" +
-        "2. open_app(app) - 打开一个app\n" +
-        "3. send_message(app, contact, message) - 在社交app中发送消息\n" +
-        "4. check_and_reply(app, policy) - 检查社交app的新消息并回复\n" +
-        "5. send_reply(app, contact, message) - 发送回复消息\n" +
-        "6. settings_change(setting, value) - 修改系统设置\n" +
-        "7. app_browse(app) - 打开app浏览内容\n" +
-        "If no template matches, use runIntent+captureScreen+uiAutomation instead."
+      "Execute a task. template options: app_search(app,query), open_app(app), send_message(app,contact,message), check_and_reply(app,policy), send_reply(app,contact,message), settings_change(setting,value), app_browse(app). parameters is JSON string."
   )
   fun executeTask(
     @ToolParam(description = "Template name: app_search, open_app, send_message, check_and_reply, send_reply, settings_change, app_browse")
