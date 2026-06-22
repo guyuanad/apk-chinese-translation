@@ -454,7 +454,22 @@ object FSMExecutor {
         for (attempt in 1..3) {
             val screen = UiAutomationTools.captureScreen(context)
             val elements = screen["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
+
+            // Log all elements for debugging
+            Log.d(TAG, "FSM: Screen has ${elements.size} elements:")
+            for (el in elements) {
+                val idx = el["index"] as? Int ?: -1
+                val text = el["text"] as? String ?: ""
+                val desc = el["content_description"] as? String ?: ""
+                val clickable = el["is_clickable"] as? Boolean ?: false
+                val editable = el["is_editable"] as? Boolean ?: false
+                val bounds = el["bounds"] as? String ?: ""
+                val cls = el["class"] as? String ?: ""
+                Log.d(TAG, "FSM:   [$idx] text='$text' desc='$desc' clickable=$clickable editable=$editable bounds='$bounds' class='$cls'")
+            }
+
             val searchIdx = UiAutomationTools.findSearchElementIndex(elements)
+            Log.d(TAG, "FSM: findSearchElementIndex returned: $searchIdx")
 
             if (searchIdx != null) {
                 Log.d(TAG, "FSM: Found search element at index $searchIdx, tapping")
