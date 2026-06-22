@@ -59,14 +59,18 @@ internal const val DEFAULT_SYSTEM_PROMPT =
   --- MCP TOOLS ---
   ___TOOLS___
 
-  Call executeTask(template, parameters) to complete tasks. Examples:
-  - "打开抖音搜索科技视频" → executeTask("app_search", {"app": "抖音", "query": "科技视频"})
-  - "打开微信" → executeTask("open_app", {"app": "微信"})
-  - "给张三发微信说好的" → executeTask("send_message", {"app": "微信", "contact": "张三", "message": "好的"})
-  - "查看微信新消息" → executeTask("check_and_reply", {"app": "微信", "policy": "礼貌简短回复"})
+  Tools:
+  - appSearch(app, query) - 打开app并搜索。例: appSearch("抖音", "科技视频")
+  - openApp(app) - 打开app。例: openApp("微信")
+  - sendMessage(app, contact, message) - 发送消息。例: sendMessage("微信", "张三", "好的")
+  - checkAndReply(app, policy) - 检查新消息。例: checkAndReply("微信", "礼貌简短回复")
+  - sendReply(app, contact, message) - 发送回复。例: sendReply("微信", "张三", "我明天来")
+  - settingsChange(setting, value) - 修改设置。例: settingsChange("亮度", "50%")
+  - appBrowse(app) - 浏览app。例: appBrowse("小红书")
+  - captureScreen() - 截屏查看当前屏幕
+  - uiAutomation(action, parameters) - UI操作(tap, tap_element, type_text, swipe, scroll, back, home, keyevent)
 
-  Templates: app_search, open_app, send_message, check_and_reply, send_reply, settings_change, app_browse
-  If no template matches, use runIntent then captureScreen then uiAutomation.
+  Rule: Use appSearch/openApp/sendMessage/checkAndReply first. Only use captureScreen+uiAutomation if no tool matches.
   """
 
 private val DEFAULT_SYSTEM_PROMPT_TRIMMED = DEFAULT_SYSTEM_PROMPT.trimIndent()
@@ -79,14 +83,18 @@ internal const val DEFAULT_SYSTEM_PROMPT_SKILLS_ONLY =
   --- SKILLS ---
   ___SKILLS___
 
-  Call executeTask(template, parameters) to complete tasks. Examples:
-  - "打开抖音搜索科技视频" → executeTask("app_search", {"app": "抖音", "query": "科技视频"})
-  - "打开微信" → executeTask("open_app", {"app": "微信"})
-  - "给张三发微信说好的" → executeTask("send_message", {"app": "微信", "contact": "张三", "message": "好的"})
-  - "查看微信新消息" → executeTask("check_and_reply", {"app": "微信", "policy": "礼貌简短回复"})
+  Tools:
+  - appSearch(app, query) - 打开app并搜索。例: appSearch("抖音", "科技视频")
+  - openApp(app) - 打开app。例: openApp("微信")
+  - sendMessage(app, contact, message) - 发送消息。例: sendMessage("微信", "张三", "好的")
+  - checkAndReply(app, policy) - 检查新消息。例: checkAndReply("微信", "礼貌简短回复")
+  - sendReply(app, contact, message) - 发送回复。例: sendReply("微信", "张三", "我明天来")
+  - settingsChange(setting, value) - 修改设置。例: settingsChange("亮度", "50%")
+  - appBrowse(app) - 浏览app。例: appBrowse("小红书")
+  - captureScreen() - 截屏查看当前屏幕
+  - uiAutomation(action, parameters) - UI操作(tap, tap_element, type_text, swipe, scroll, back, home, keyevent)
 
-  Templates: app_search, open_app, send_message, check_and_reply, send_reply, settings_change, app_browse
-  If no template matches, use runIntent then captureScreen then uiAutomation.
+  Rule: Use appSearch/openApp/sendMessage/checkAndReply first. Only use captureScreen+uiAutomation if no tool matches.
   """
 
 private val DEFAULT_SYSTEM_PROMPT_SKILLS_ONLY_TRIMMED =

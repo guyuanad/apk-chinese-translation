@@ -866,76 +866,125 @@ open class AgentTools(
     return mapOf("result" to rawResult, "status" to "succeeded")
   }
 
-  // --- Template-based Task Execution ---
+  // --- Template-based Task Execution (specialized tools for 2B model) ---
 
-  @Tool(
-    description =
-      "Execute a task. template options: app_search(app,query), open_app(app), send_message(app,contact,message), check_and_reply(app,policy), send_reply(app,contact,message), settings_change(setting,value), app_browse(app). parameters is JSON string."
-  )
-  fun executeTask(
-    @ToolParam(description = "Template name: app_search, open_app, send_message, check_and_reply, send_reply, settings_change, app_browse")
-    template: String,
-    @ToolParam(description = "JSON object with template parameters. e.g. {\"app\": \"抖音\", \"query\": \"科技视频\"}")
-    parameters: String,
+  private suspend fun runFSM(template: String, params: Map<String, Any>): Map<String, Any> {
+    if (!checkCallLimit(template)) {
+      return mapOf("error" to "Too many calls", "status" to "blocked")
+    }
+    writeLog("D", TAG, "runFSM: template=$template, params=$params")
+
+    runBlocking(Dispatchers.Main) {
+      _actionChannel.send(
+        SkillProgressAgentAction(
+          label = "Executing: $template",
+          inProgress = true,
+          addItemTitle = "Execute: $template",
+          addItemDescription = "Parameters: $params",
+        )
+      )
+    }
+
+    val result = FSMExecutor.execute(context, template, params)
+    pendingAppOpen = false
+    lastCaptureScreenTime = System.currentTimeMillis()
+
+    val resultMap = mutableMapOf<String, Any>(
+      "status" to result.status,
+      "message" to result.message,
+      "template" to template,
+    )
+    resultMap.putAll(result.data)
+
+    if (result.status == "need_input") {
+      resultMap["hint"] = result.data["hint"] ?: "请根据上面的消息生成回复，然后用sendReply()发送。"
+    }
+
+    writeLog("D", TAG, "runFSM result: status=${result.status}, message=${result.message}")
+    return resultMap as Map<String, Any>
+  }
+
+  @Tool(description = "打开一个app并搜索内容。例如：appSearch(\"抖音\", \"科技视频\")")
+  fun appSearch(
+    @ToolParam(description = "App名称，如\"抖音\"、\"小红书\"、\"淘宝\"")
+    app: String,
+    @ToolParam(description = "搜索内容，如\"科技视频\"、\"美食\"、\"手机\"")
+    query: String,
   ): Map<String, Any> {
     return runBlocking(Dispatchers.Default) {
-      if (!checkCallLimit("executeTask")) {
-        return@runBlocking mapOf("error" to "Too many calls to executeTask", "status" to "blocked")
-      }
-      withToolLogging("executeTask") {
-        // Parse parameters
-        val params = try {
-          val json = kotlinx.serialization.json.Json.parseToJsonElement(parameters).jsonObject
-          json.mapValues { (_, v) ->
-            when (v) {
-              is kotlinx.serialization.json.JsonPrimitive -> {
-                if (v.isString) v.content else v.toString()
-              }
-              else -> v.toString()
-            }
-          }
-        } catch (e: Exception) {
-          writeLog("E", TAG, "executeTask: Failed to parse parameters: ${e.message}")
-          return@withToolLogging mapOf("status" to "error", "message" to "Invalid JSON parameters: ${e.message}")
-        }
+      withToolLogging("appSearch") { runFSM("app_search", mapOf("app" to app, "query" to query)) }
+    }
+  }
 
-        writeLog("D", TAG, "executeTask: template=$template, params=$params")
+  @Tool(description = "打开一个app。例如：openApp(\"微信\")")
+  fun openApp(
+    @ToolParam(description = "App名称，如\"微信\"、\"抖音\"、\"设置\"")
+    app: String,
+  ): Map<String, Any> {
+    return runBlocking(Dispatchers.Default) {
+      withToolLogging("openApp") { runFSM("open_app", mapOf("app" to app)) }
+    }
+  }
 
-        // Send progress action
-        runBlocking(Dispatchers.Main) {
-          _actionChannel.send(
-            SkillProgressAgentAction(
-              label = "Executing task: $template",
-              inProgress = true,
-              addItemTitle = "Execute: $template",
-              addItemDescription = "Parameters: $params",
-            )
-          )
-        }
+  @Tool(description = "在社交app中发送消息。例如：sendMessage(\"微信\", \"张三\", \"好的\")")
+  fun sendMessage(
+    @ToolParam(description = "App名称，如\"微信\"、\"QQ\"")
+    app: String,
+    @ToolParam(description = "联系人名称，如\"张三\"、\"妈妈\"")
+    contact: String,
+    @ToolParam(description = "消息内容，如\"好的\"、\"我明天来\"")
+    message: String,
+  ): Map<String, Any> {
+    return runBlocking(Dispatchers.Default) {
+      withToolLogging("sendMessage") { runFSM("send_message", mapOf("app" to app, "contact" to contact, "message" to message)) }
+    }
+  }
 
-        // Execute the FSM
-        val result = FSMExecutor.execute(context, template, params)
+  @Tool(description = "检查社交app的新消息。返回消息内容后，用sendReply发送回复。例如：checkAndReply(\"微信\", \"礼貌简短回复\")")
+  fun checkAndReply(
+    @ToolParam(description = "App名称，如\"微信\"、\"QQ\"")
+    app: String,
+    @ToolParam(description = "回复策略，如\"礼貌简短回复\"、\"随意回复\"")
+    policy: String,
+  ): Map<String, Any> {
+    return runBlocking(Dispatchers.Default) {
+      withToolLogging("checkAndReply") { runFSM("check_and_reply", mapOf("app" to app, "policy" to policy)) }
+    }
+  }
 
-        // Reset state tracking since FSM handled everything internally
-        pendingAppOpen = false
-        lastCaptureScreenTime = System.currentTimeMillis()
+  @Tool(description = "发送回复消息（在checkAndReply之后使用）。例如：sendReply(\"微信\", \"张三\", \"我明天来\")")
+  fun sendReply(
+    @ToolParam(description = "App名称")
+    app: String,
+    @ToolParam(description = "联系人名称")
+    contact: String,
+    @ToolParam(description = "回复内容")
+    message: String,
+  ): Map<String, Any> {
+    return runBlocking(Dispatchers.Default) {
+      withToolLogging("sendReply") { runFSM("send_reply", mapOf("app" to app, "contact" to contact, "message" to message)) }
+    }
+  }
 
-        // Build result map
-        val resultMap = mutableMapOf<String, Any>(
-          "status" to result.status,
-          "message" to result.message,
-          "template" to template,
-        )
-        resultMap.putAll(result.data)
+  @Tool(description = "修改系统设置。例如：settingsChange(\"亮度\", \"50%\")")
+  fun settingsChange(
+    @ToolParam(description = "设置项，如\"亮度\"、\"音量\"、\"WiFi\"")
+    setting: String,
+    @ToolParam(description = "设置值，如\"50%\"、\"开启\"、\"关闭\"")
+    value: String,
+  ): Map<String, Any> {
+    return runBlocking(Dispatchers.Default) {
+      withToolLogging("settingsChange") { runFSM("settings_change", mapOf("setting" to setting, "value" to value)) }
+    }
+  }
 
-        if (result.status == "need_input") {
-          resultMap["hint"] = result.data["hint"] ?: "请根据上面的消息生成回复，然后用executeTask(\"send_reply\", ...)发送。"
-        }
-
-        writeLog("D", TAG, "executeTask result: status=${result.status}, message=${result.message}")
-
-        resultMap as Map<String, Any>
-      }
+  @Tool(description = "打开app浏览内容。例如：appBrowse(\"小红书\")")
+  fun appBrowse(
+    @ToolParam(description = "App名称")
+    app: String,
+  ): Map<String, Any> {
+    return runBlocking(Dispatchers.Default) {
+      withToolLogging("appBrowse") { runFSM("app_browse", mapOf("app" to app)) }
     }
   }
 
