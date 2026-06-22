@@ -460,10 +460,22 @@ object FSMExecutor {
                 Log.d(TAG, "FSM: Found search element at index $searchIdx, tapping")
                 val tapResult = UiAutomationTools.executeUiAction(context, "tap_element", "{\"element_index\": $searchIdx}")
                 if (tapResult["status"] == "success") {
-                    return FSMStepResult(FSMState.SEARCH_PAGE, "Tapped search button at index $searchIdx")
+                    delay(1500)
+                    // Verify: check if we're now on a search/input page
+                    val verifyScreen = UiAutomationTools.captureScreen(context)
+                    val verifyElements = verifyScreen["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
+                    val hasInputField = verifyElements.any { el ->
+                        (el["is_editable"] as? Boolean ?: false) ||
+                        (el["class"] as? String ?: "").let { it.contains("EditText") || it.contains("SearchView") }
+                    }
+                    if (hasInputField) {
+                        Log.d(TAG, "FSM: Verified search page with input field")
+                        return FSMStepResult(FSMState.SEARCH_PAGE, "Tapped search button at index $searchIdx, now on search page")
+                    }
+                    Log.d(TAG, "FSM: Tapped index $searchIdx but no input field found, may have tapped wrong element")
                 }
             }
-            Log.d(TAG, "FSM: Search button not found, attempt $attempt/3")
+            Log.d(TAG, "FSM: Search button not found or wrong element, attempt $attempt/3")
             delay(1000)
         }
 

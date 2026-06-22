@@ -815,36 +815,48 @@ object UiAutomationTools {
    */
   fun findSearchElementIndex(elements: List<Map<String, Any>>): Int? {
     val searchKeywords = listOf("搜索", "search", "Search", "搜一搜")
+    val excludeKeywords = listOf("商城", "购物", "订单", "消息", "我", "首页", "朋友")
 
-    // Priority 1: Find editable search field
-    for (el in elements) {
+    // Helper: get element Y position from bounds (top coordinate)
+    fun getY(el: Map<String, Any>): Int {
+      val bounds = el["bounds"] as? String ?: ""
+      val match = Regex("\\[(\\d+),(\\d+)").find(bounds)
+      return match?.groupValues?.get(2)?.toIntOrNull() ?: Int.MAX_VALUE
+    }
+
+    // Priority 1: Find editable search field (top half of screen preferred)
+    val editableMatches = elements.filter { el ->
       val text = el["text"] as? String ?: ""
       val desc = el["content_description"] as? String ?: ""
       val editable = el["is_editable"] as? Boolean ?: false
-      val idx = el["index"] as? Int ?: continue
-      if (editable && (searchKeywords.any { text.contains(it) || desc.contains(it) })) {
-        return idx
-      }
+      editable && (searchKeywords.any { text.contains(it) || desc.contains(it) })
+    }
+    if (editableMatches.isNotEmpty()) {
+      // Prefer topmost element
+      return editableMatches.minByOrNull { getY(it) }?.get("index") as? Int
     }
 
-    // Priority 2: Find clickable search button/icon
-    for (el in elements) {
+    // Priority 2: Find clickable search button/icon (top half preferred, exclude bottom nav)
+    val clickableMatches = elements.filter { el ->
       val text = el["text"] as? String ?: ""
       val desc = el["content_description"] as? String ?: ""
       val clickable = el["is_clickable"] as? Boolean ?: false
-      val idx = el["index"] as? Int ?: continue
-      if (clickable && (searchKeywords.any { text.contains(it) || desc.contains(it) })) {
-        return idx
-      }
+      val idx = el["index"] as? Int ?: -1
+      clickable &&
+        (searchKeywords.any { text.contains(it) || desc.contains(it) }) &&
+        !excludeKeywords.any { text.contains(it) || desc.contains(it) }
+    }
+    if (clickableMatches.isNotEmpty()) {
+      // Sort by Y position, prefer topmost (smallest Y = closest to top)
+      return clickableMatches.minByOrNull { getY(it) }?.get("index") as? Int
     }
 
-    // Priority 3: Find any editable field
-    for (el in elements) {
-      val editable = el["is_editable"] as? Boolean ?: false
-      val idx = el["index"] as? Int ?: continue
-      if (editable) {
-        return idx
-      }
+    // Priority 3: Find any editable field (top half preferred)
+    val anyEditable = elements.filter { el ->
+      (el["is_editable"] as? Boolean ?: false)
+    }
+    if (anyEditable.isNotEmpty()) {
+      return anyEditable.minByOrNull { getY(it) }?.get("index") as? Int
     }
 
     return null
