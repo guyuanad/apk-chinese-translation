@@ -589,22 +589,38 @@ object FSMExecutor {
             } catch (e: Exception) {
                 Log.d(TAG, "FSM: Strategy $strategyName threw: ${e.message}")
             }
-            delay(2000)
+            delay(2500)
 
             // Check if search was submitted
+            // Note: search results page still has the search bar with query text,
+            // so we can't just check if query is still in editable field.
+            // Instead, check if new content appeared (more elements than before).
             val checkScreen = UiAutomationTools.captureScreen(context)
             val checkElements = checkScreen["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
-            val stillHasQueryInInput = checkElements.any { el ->
+            val fgPackage = checkScreen["foreground_package"] as? String ?: ""
+
+            // Count content elements (non-input, non-navigation elements with text)
+            val contentElements = checkElements.count { el ->
+                val text = el["text"] as? String ?: ""
                 val editable = el["is_editable"] as? Boolean ?: false
-                val elText = el["text"] as? String ?: ""
-                editable && elText.contains(query)
+                val cls = el["class"] as? String ?: ""
+                text.isNotEmpty() && !editable &&
+                    !cls.contains("ImageView") && !cls.contains("ImageButton")
             }
 
-            if (!stillHasQueryInInput) {
-                Log.d(TAG, "FSM: Search submitted successfully via $strategyName")
+            // Check if keyboard is still showing (if input is focused, keyboard is up)
+            val hasFocusedInput = checkElements.any { el ->
+                val editable = el["is_editable"] as? Boolean ?: false
+                val focused = el["is_focused"] as? Boolean ?: false
+                editable && focused
+            }
+
+            // If we have content elements and no focused input, search was likely submitted
+            if (contentElements > 5 && !hasFocusedInput) {
+                Log.d(TAG, "FSM: Search submitted successfully via $strategyName (content=$contentElements, hasFocusedInput=$hasFocusedInput)")
                 return FSMStepResult(FSMState.SEARCH_SUBMITTED, "Search submitted via $strategyName")
             }
-            Log.d(TAG, "FSM: Still on input page after $strategyName")
+            Log.d(TAG, "FSM: Still on input page after $strategyName (content=$contentElements, hasFocusedInput=$hasFocusedInput)")
         }
 
         return FSMStepResult(FSMState.ERROR, "All submit strategies failed")
