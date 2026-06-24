@@ -145,6 +145,12 @@ object FSMExecutor {
     /**
      * Execute a task template by running its FSM.
      */
+    private var permissionCallback: (suspend (String) -> Boolean)? = null
+
+    fun setPermissionCallback(callback: suspend (String) -> Boolean) {
+        permissionCallback = callback
+    }
+
     suspend fun execute(
         context: Context,
         templateName: String,
@@ -437,8 +443,7 @@ object FSMExecutor {
         Log.d(TAG, "FSM Step: openApp($appName)")
         val escapedAppName = appName.replace("\\", "\\\\").replace("\"", "\\\"")
         val result = IntentHandler.handleAction(context, "open_app", "{\"package_name\": \"$escapedAppName\"}") { permission ->
-            // No permission callback in FSM context - always grant
-            true
+            permissionCallback?.invoke(permission) ?: true
         }
 
         return if (result == "succeeded") {

@@ -874,6 +874,13 @@ open class AgentTools(
     }
     writeLog("D", TAG, "runFSM: template=$template, params=$params")
 
+    // Set permission callback so FSM can request permissions properly
+    FSMExecutor.setPermissionCallback { permission ->
+      val permissionAction = RequestPermissionAgentAction(permission = permission)
+      _actionChannel.send(permissionAction)
+      permissionAction.result.await()
+    }
+
     runBlocking(Dispatchers.Main) {
       _actionChannel.send(
         SkillProgressAgentAction(
