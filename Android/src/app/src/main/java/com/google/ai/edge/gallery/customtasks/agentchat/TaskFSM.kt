@@ -558,9 +558,13 @@ object FSMExecutor {
     private suspend fun submitSearch(context: Context, query: String): FSMStepResult {
         Log.d(TAG, "FSM Step: submitSearch($query)")
 
+        // Capture screen BEFORE submit to compare later
+        val beforeScreen = UiAutomationTools.captureScreen(context)
+        val beforeElements = beforeScreen["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
+        val beforeCount = beforeElements.size
+        Log.d(TAG, "FSM: Before submit: $beforeCount elements")
+
         val submitStrategies = listOf<Pair<String, suspend () -> Boolean>>(
-            "findAndClickSubmitButton" to { UiAutomationTools.findAndClickSubmitButton(query) },
-            "tapScreenCalculatedPosition" to { UiAutomationTools.tapSubmitButtonByScreenPosition() },
             "pressEnter" to {
                 UiAutomationTools.executeUiAction(context, "keyevent", "{\"keycode\": \"KEYCODE_ENTER\"}")
                 true
@@ -569,6 +573,8 @@ object FSMExecutor {
                 UiAutomationTools.executeUiAction(context, "keyevent", "{\"keycode\": \"KEYCODE_SEARCH\"}")
                 true
             },
+            "findAndClickSubmitButton" to { UiAutomationTools.findAndClickSubmitButton(query) },
+            "tapScreenCalculatedPosition" to { UiAutomationTools.tapSubmitButtonByScreenPosition() },
             "tapElementListSubmit" to {
                 val screen = UiAutomationTools.captureScreen(context)
                 val els = screen["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
@@ -594,38 +600,28 @@ object FSMExecutor {
             } catch (e: Exception) {
                 Log.d(TAG, "FSM: Strategy $strategyName threw: ${e.message}")
             }
-            delay(2500)
+            delay(3000)
 
-            // Check if search was submitted
-            // Note: search results page still has the search bar with query text,
-            // so we can't just check if query is still in editable field.
-            // Instead, check if new content appeared (more elements than before).
-            val checkScreen = UiAutomationTools.captureScreen(context)
-            val checkElements = checkScreen["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
-            val fgPackage = checkScreen["foreground_package"] as? String ?: ""
+            // Check if screen changed significantly after submit
+            val afterScreen = UiAutomationTools.captureScreen(context)
+            val afterElements = afterScreen["interactive_elements"] as? List<Map<String, Any>> ?: emptyList()
+            val afterCount = afterElements.size
+            val afterSummary = afterScreen["screen_summary"] as? String ?: ""
 
-            // Count content elements (non-input, non-navigation elements with text)
-            val contentElements = checkElements.count { el ->
-                val text = el["text"] as? String ?: ""
-                val editable = el["is_editable"] as? Boolean ?: false
-                val cls = el["class"] as? String ?: ""
-                text.isNotEmpty() && !editable &&
-                    !cls.contains("ImageView") && !cls.contains("ImageButton")
-            }
+            Log.d(TAG, "FSM: After $strategyName: $afterCount elements (before: $beforeCount)")
 
-            // Check if keyboard is still showing (if input is focused, keyboard is up)
-            val hasFocusedInput = checkElements.any { el ->
-                val editable = el["is_editable"] as? Boolean ?: false
-                val focused = el["is_focused"] as? Boolean ?: false
-                editable && focused
-            }
+            // Heuristic: if element count changed significantly, screen changed = search submitted
+            // Also check if summary mentions content/results
+            val countChanged = (afterCount - beforeCount).let { it > 3 || it < -3 }
+            val hasContentKeywords = afterSummary.contains("视频") || afterSummary.contains("用户") ||
+                afterSummary.contains("结果") || afterSummary.contains("推荐") ||
+                afterSummary.contains("content") || afterSummary.contains("result")
 
-            // If we have content elements and no focused input, search was likely submitted
-            if (contentElements > 5 && !hasFocusedInput) {
-                Log.d(TAG, "FSM: Search submitted successfully via $strategyName (content=$contentElements, hasFocusedInput=$hasFocusedInput)")
+            if (countChanged || hasContentKeywords) {
+                Log.d(TAG, "FSM: Search submitted successfully via $strategyName (countChanged=$countChanged, hasContentKeywords=$hasContentKeywords)")
                 return FSMStepResult(FSMState.SEARCH_SUBMITTED, "Search submitted via $strategyName")
             }
-            Log.d(TAG, "FSM: Still on input page after $strategyName (content=$contentElements, hasFocusedInput=$hasFocusedInput)")
+            Log.d(TAG, "FSM: No significant screen change after $strategyName")
         }
 
         return FSMStepResult(FSMState.ERROR, "All submit strategies failed")
