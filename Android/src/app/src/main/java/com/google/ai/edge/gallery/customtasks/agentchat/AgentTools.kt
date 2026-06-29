@@ -21,6 +21,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.coroutines.withTimeoutOrNull
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.os.Environment
 import android.os.Bundle
 import android.util.Log
@@ -284,6 +285,9 @@ open class AgentTools(
   val actionChannel: ReceiveChannel<AgentAction> = _actionChannel
   var resultImageToShow: CallJsSkillResultImage? = null
   var resultWebviewToShow: CallJsSkillResultWebview? = null
+
+  /** Pending screenshot Bitmap to be injected into the next model turn for visual understanding. */
+  var pendingScreenshot: Bitmap? = null
 
   private fun checkCallLimit(toolName: String): Boolean {
     val count = callCounts.computeIfAbsent(toolName) { AtomicInteger(0) }.incrementAndGet()
@@ -997,17 +1001,31 @@ open class AgentTools(
 
   // --- UI Automation Tools ---
 
-  @Tool(description = "Capture the current screen. Returns screenshot path, foreground app package name, and a list of interactive UI elements with their bounds, text, content description, and class name.")
+  @Tool(description = "Capture the current screen. Returns screenshot path, foreground app package name, and a list of interactive UI elements with their bounds, text, content description, and class name. Also captures a screenshot image for visual analysis.")
   fun captureScreen(): Map<String, Any> {
     return runBlocking(Dispatchers.Default) {
       if (!checkCallLimit("captureScreen")) {
         return@runBlocking mapOf("error" to "Too many calls to captureScreen", "status" to "blocked")
       }
       withToolLogging("captureScreen") {
+        // Capture accessibility info
         val result = UiAutomationTools.captureScreen(context)
         if (result["status"] == "success") {
           lastCaptureScreenTime = System.currentTimeMillis()
           pendingAppOpen = false
+
+          // Also capture screenshot Bitmap for visual understanding
+          try {
+            val bitmap = UiAutomationTools.captureScreenBitmap()
+            if (bitmap != null) {
+              pendingScreenshot = bitmap
+              writeLog("D", TAG, "captureScreen: Screenshot bitmap captured (${bitmap.width}x${bitmap.height}), will be sent to model for visual analysis")
+            } else {
+              writeLog("D", TAG, "captureScreen: Could not capture screenshot bitmap, visual analysis not available")
+            }
+          } catch (e: Exception) {
+            writeLog("W", TAG, "captureScreen: Failed to capture screenshot bitmap: ${e.message}")
+          }
         }
         taskStateTracker.recordToolCall("captureScreen", result)
         result

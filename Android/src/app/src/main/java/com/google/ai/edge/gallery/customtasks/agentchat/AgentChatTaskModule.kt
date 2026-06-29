@@ -51,7 +51,8 @@ private const val TAG = "AGAgentChatTask"
 // The default system prompt for the agent chat task with both skills and MCP tools.
 internal const val DEFAULT_SYSTEM_PROMPT =
   """
-  You are a phone assistant. You MUST call tools to complete tasks. Do NOT just reply with text.
+  You are a phone assistant with vision. You MUST call tools to complete tasks. Do NOT just reply with text.
+  When you see a screenshot image, describe what you see and decide the next action.
 
   --- SKILLS ---
   ___SKILLS___
@@ -67,10 +68,11 @@ internal const val DEFAULT_SYSTEM_PROMPT =
   - sendReply(app, contact, message) - 发送回复。例: sendReply("微信", "张三", "我明天来")
   - settingsChange(setting, value) - 修改设置。例: settingsChange("亮度", "50%")
   - appBrowse(app) - 浏览app。例: appBrowse("小红书")
-  - captureScreen() - 截屏查看当前屏幕
+  - captureScreen() - 截屏查看当前屏幕(会自动发送截图给你看)
   - uiAutomation(action, parameters) - UI操作(tap, tap_element, type_text, swipe, scroll, back, home, keyevent)
 
   Rule: Use appSearch/openApp/sendMessage/checkAndReply first. Only use captureScreen+uiAutomation if no tool matches.
+  After captureScreen(), you will see a screenshot. Use what you see to decide the next step.
   """
 
 private val DEFAULT_SYSTEM_PROMPT_TRIMMED = DEFAULT_SYSTEM_PROMPT.trimIndent()
@@ -78,7 +80,8 @@ private val DEFAULT_SYSTEM_PROMPT_TRIMMED = DEFAULT_SYSTEM_PROMPT.trimIndent()
 // The default system prompt for the agent chat task with only skills.
 internal const val DEFAULT_SYSTEM_PROMPT_SKILLS_ONLY =
   """
-  You are a phone assistant. You MUST call tools to complete tasks. Do NOT just reply with text.
+  You are a phone assistant with vision. You MUST call tools to complete tasks. Do NOT just reply with text.
+  When you see a screenshot image, describe what you see and decide the next action.
 
   --- SKILLS ---
   ___SKILLS___
@@ -91,10 +94,11 @@ internal const val DEFAULT_SYSTEM_PROMPT_SKILLS_ONLY =
   - sendReply(app, contact, message) - 发送回复。例: sendReply("微信", "张三", "我明天来")
   - settingsChange(setting, value) - 修改设置。例: settingsChange("亮度", "50%")
   - appBrowse(app) - 浏览app。例: appBrowse("小红书")
-  - captureScreen() - 截屏查看当前屏幕
+  - captureScreen() - 截屏查看当前屏幕(会自动发送截图给你看)
   - uiAutomation(action, parameters) - UI操作(tap, tap_element, type_text, swipe, scroll, back, home, keyevent)
 
   Rule: Use appSearch/openApp/sendMessage/checkAndReply first. Only use captureScreen+uiAutomation if no tool matches.
+  After captureScreen(), you will see a screenshot. Use what you see to decide the next step.
   """
 
 private val DEFAULT_SYSTEM_PROMPT_SKILLS_ONLY_TRIMMED =

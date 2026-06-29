@@ -266,6 +266,37 @@ fun AgentChatScreen(
         }
         updateProgressPanel(viewModel = viewModel, model = model, agentTools = agentTools)
 
+        // VISION: Check if there's a pending screenshot to show the model
+        val pendingScreenshot = agentTools.pendingScreenshot
+        if (pendingScreenshot != null) {
+          agentTools.pendingScreenshot = null
+          Log.d(TAG, "VISION: Injecting screenshot into model conversation for visual analysis")
+          // Scale down the screenshot to reduce inference time (2B model is slow with large images)
+          val scaledBitmap = scaleBitmapForModel(pendingScreenshot, maxWidth = 640, maxHeight = 480)
+          viewModel.generateResponse(
+            model = model,
+            input = "Look at the screenshot above. Describe what you see on the screen briefly, then decide what to do next based on the task.",
+            images = listOf(scaledBitmap ?: pendingScreenshot),
+            onFirstToken = { },
+            onDone = {
+              // After vision analysis, check if auto-continue is needed
+              if (agentTools.taskStateTracker.shouldAutoContinue()) {
+                Log.d(TAG, "AUTO-CONTINUE after vision: Task not complete, forcing model to continue")
+                val continuePrompt = agentTools.taskStateTracker.getContinuationPrompt()
+                viewModel.generateResponse(
+                  model = model,
+                  input = continuePrompt,
+                  onFirstToken = { },
+                  onDone = { },
+                  onError = { Log.e(TAG, "Auto-continue after vision error: $it") },
+                )
+              }
+            },
+            onError = { Log.e(TAG, "Vision injection error: $it") },
+          )
+          return@launch
+        }
+
         // AUTO-CONTINUE: Check if task is complete, if not force model to continue
         if (agentTools.taskStateTracker.shouldAutoContinue()) {
           Log.d(TAG, "AUTO-CONTINUE: Task not complete, forcing model to continue (step ${agentTools.taskStateTracker.autoContinueCount}/${agentTools.taskStateTracker.maxAutoContinueSteps})")
@@ -831,4 +862,20 @@ class ChatWebViewClient(val context: Context) : BaseGalleryWebViewClient(context
     Log.d(TAG, "page loaded")
     onPageLoaded?.invoke()
   }
+}
+
+/**
+ * Scales a Bitmap down to fit within maxWidth x maxHeight while preserving aspect ratio.
+ * This reduces inference time when sending screenshots to the model.
+ */
+private fun scaleBitmapForModel(bitmap: android.graphics.Bitmap, maxWidth: Int, maxHeight: Int): android.graphics.Bitmap? {
+  val width = bitmap.width
+  val height = bitmap.height
+  if (width <= maxWidth && height <= maxHeight) return null // No scaling needed
+
+  val scale = minOf(maxWidth.toFloat() / width, maxHeight.toFloat() / height)
+  val newWidth = (width * scale).toInt()
+  val newHeight = (height * scale).toInt()
+
+  return android.graphics.Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
 }

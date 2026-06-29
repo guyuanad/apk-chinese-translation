@@ -16,15 +16,22 @@
 package com.google.ai.edge.gallery.customtasks.agentchat
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.ColorSpace
 import android.graphics.Rect
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.util.Log
 import android.view.accessibility.AccessibilityNodeInfo
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 private const val TAG = "UiAutomationTools"
 
@@ -45,6 +52,75 @@ object UiAutomationTools {
       Log.w(TAG, "Failed to check accessibility service: ${e.message}")
       false
     }
+  }
+
+  /**
+   * Captures the current screen as a Bitmap using AccessibilityService.takeScreenshot().
+   * Requires canTakeScreenshot="true" in service config (API 30+).
+   * Falls back to reading the screencap file if takeScreenshot fails.
+   * Returns null if screenshot cannot be captured.
+   */
+  suspend fun captureScreenBitmap(): Bitmap? {
+    val service = UiAutomationServiceHolder.instance
+    if (service == null) {
+      Log.w(TAG, "captureScreenBitmap: AccessibilityService not available")
+      return null
+    }
+
+    // Method 1: Use AccessibilityService.takeScreenshot() (API 24+, needs canTakeScreenshot on API 30+)
+    try {
+      val screenshot = suspendCancellableCoroutine<Bitmap?> { continuation ->
+        val handler = Handler(Looper.getMainLooper())
+        service.takeScreenshot(
+          android.view.Display.DEFAULT_DISPLAY,
+          { handler.post(it) },
+          object : AccessibilityService.TakeScreenshotCallback {
+            override fun onSuccess(screenshot: AccessibilityService.Screenshot) {
+              try {
+                val hardwareBitmap = screenshot.hardwareBitmap
+                // Convert hardware bitmap to a regular bitmap for compatibility
+                val bitmap = hardwareBitmap.copy(Bitmap.Config.ARGB_8888, false)
+                screenshot.hardwareBitmap.close()
+                screenshot.close()
+                Log.d(TAG, "captureScreenBitmap: Success via takeScreenshot(), size=${bitmap?.width}x${bitmap?.height}")
+                continuation.resume(bitmap)
+              } catch (e: Exception) {
+                Log.e(TAG, "captureScreenBitmap: Error processing screenshot: ${e.message}")
+                continuation.resume(null)
+              }
+            }
+
+            override fun onFailure(errorCode: Int) {
+              Log.w(TAG, "captureScreenBitmap: takeScreenshot() failed with errorCode=$errorCode")
+              continuation.resume(null)
+            }
+          },
+        )
+      }
+      if (screenshot != null) return screenshot
+    } catch (e: Exception) {
+      Log.w(TAG, "captureScreenBitmap: takeScreenshot() exception: ${e.message}")
+    }
+
+    // Method 2: Fallback - read screencap file (requires root)
+    try {
+      val exitCode = execShellCommand("screencap -p /data/local/tmp/screen_capture.png")
+      if (exitCode == 0) {
+        val file = java.io.File("/data/local/tmp/screen_capture.png")
+        if (file.exists()) {
+          val bitmap = android.graphics.BitmapFactory.decodeFile(file.absolutePath)
+          if (bitmap != null) {
+            Log.d(TAG, "captureScreenBitmap: Success via screencap file, size=${bitmap.width}x${bitmap.height}")
+            return bitmap
+          }
+        }
+      }
+    } catch (e: Exception) {
+      Log.w(TAG, "captureScreenBitmap: screencap fallback failed: ${e.message}")
+    }
+
+    Log.w(TAG, "captureScreenBitmap: All methods failed")
+    return null
   }
 
   /**
