@@ -71,6 +71,8 @@ private val APP_NAME_TO_PACKAGE_MAP = mapOf(
   "Edge" to "com.microsoft.emmx",
   "UC浏览器" to "com.UCMobile",
   "夸克" to "com.quark.browser",
+  "爱原生" to "com.aiego.agent",
+  "AISelf" to "com.aiego.agent",
   "华为浏览器" to "com.huawei.browser",
   "荣耀浏览器" to "com.hihonor.browser",
   "应用市场" to "com.hihonor.appmarket",
