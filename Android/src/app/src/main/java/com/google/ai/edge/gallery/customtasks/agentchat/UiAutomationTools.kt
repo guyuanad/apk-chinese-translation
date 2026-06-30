@@ -74,8 +74,8 @@ object UiAutomationTools {
         service.takeScreenshot(
           android.view.Display.DEFAULT_DISPLAY,
           { handler.post(it) },
-          object : AccessibilityService.TakeScreenshotCallback {
-            override fun onSuccess(screenshot: AccessibilityService.Screenshot) {
+          object : android.accessibilityservice.AccessibilityService.TakeScreenshotCallback {
+            override fun onSuccess(screenshot: android.accessibilityservice.AccessibilityService.Screenshot) {
               try {
                 val hardwareBitmap = screenshot.hardwareBitmap
                 // Convert hardware bitmap to a regular bitmap for compatibility
