@@ -911,6 +911,21 @@ open class AgentTools(
       resultMap["hint"] = result.data["hint"] ?: "请根据上面的消息生成回复，然后用sendReply()发送。"
     }
 
+    // VISION: If FSM didn't fully succeed, capture screenshot for model visual analysis
+    if (result.status != "success") {
+      try {
+        val bitmap = UiAutomationTools.captureScreenBitmap()
+        if (bitmap != null) {
+          pendingScreenshot = bitmap
+          writeLog("D", TAG, "runFSM: FSM result is '${result.status}', captured screenshot (${bitmap.width}x${bitmap.height}) for visual analysis")
+        } else {
+          writeLog("D", TAG, "runFSM: FSM result is '${result.status}', but could not capture screenshot for visual analysis")
+        }
+      } catch (e: Exception) {
+        writeLog("W", TAG, "runFSM: Failed to capture screenshot for visual analysis: ${e.message}")
+      }
+    }
+
     writeLog("D", TAG, "runFSM result: status=${result.status}, message=${result.message}")
     return resultMap as Map<String, Any>
   }
