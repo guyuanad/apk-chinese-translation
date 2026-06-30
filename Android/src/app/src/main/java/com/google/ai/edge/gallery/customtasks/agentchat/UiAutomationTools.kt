@@ -78,10 +78,11 @@ object UiAutomationTools {
                   val hardwareBuffer = screenshot.hardwareBuffer
                   val colorSpace = screenshot.colorSpace
                   val bitmap = Bitmap.wrapHardwareBuffer(hardwareBuffer, colorSpace)
-                  hardwareBuffer.close()
-                  screenshot.close()
                   // Convert hardware bitmap to a software bitmap for compatibility
                   val swBitmap = bitmap?.copy(Bitmap.Config.ARGB_8888, false)
+                  // Release resources - ScreenshotResult and HardwareBuffer implement AutoCloseable
+                  try { (hardwareBuffer as? java.lang.AutoCloseable)?.close() } catch (_: Exception) {}
+                  try { (screenshot as? java.lang.AutoCloseable)?.close() } catch (_: Exception) {}
                   Log.d(TAG, "captureScreenBitmap: Success via takeScreenshot(), size=${swBitmap?.width}x${swBitmap?.height}")
                   continuation.resume(swBitmap)
                 } catch (e: Exception) {
