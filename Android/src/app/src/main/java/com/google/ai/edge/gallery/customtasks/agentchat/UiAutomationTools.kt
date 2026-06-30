@@ -72,7 +72,7 @@ object UiAutomationTools {
           service.takeScreenshot(
             android.view.Display.DEFAULT_DISPLAY,
             service.mainExecutor,
-            object : AccessibilityService.TakeScreenshotCallback() {
+            object : AccessibilityService.TakeScreenshotCallback {
               override fun onSuccess(screenshot: AccessibilityService.ScreenshotResult) {
                 try {
                   val hardwareBuffer = screenshot.hardwareBuffer
@@ -80,9 +80,8 @@ object UiAutomationTools {
                   val bitmap = Bitmap.wrapHardwareBuffer(hardwareBuffer, colorSpace)
                   hardwareBuffer.close()
                   screenshot.close()
-                  // Convert hardware bitmap to a mutable software bitmap for compatibility
+                  // Convert hardware bitmap to a software bitmap for compatibility
                   val swBitmap = bitmap?.copy(Bitmap.Config.ARGB_8888, false)
-                  bitmap?.close()
                   Log.d(TAG, "captureScreenBitmap: Success via takeScreenshot(), size=${swBitmap?.width}x${swBitmap?.height}")
                   continuation.resume(swBitmap)
                 } catch (e: Exception) {
