@@ -70,8 +70,10 @@ internal const val DEFAULT_SYSTEM_PROMPT =
   - appBrowse(app) - 浏览app。例: appBrowse("小红书")
   - captureScreen() - 截屏查看当前屏幕(会自动发送截图给你看)
   - uiAutomation(action, parameters) - UI操作(tap, tap_element, type_text, swipe, scroll, back, home, keyevent)
+  - runIntent(action, parameters) - 执行意图。若appSearch失败，用runIntent("search_in_app", "{\"app\":\"抖音\",\"query\":\"科技视频\"}")
 
-  Rule: Use appSearch/openApp/sendMessage/checkAndReply first. Only use captureScreen+uiAutomation if no tool matches.
+  Rule: Use appSearch/openApp/sendMessage/checkAndReply first. If appSearch fails, use runIntent("search_in_app", ...) instead.
+  Only use captureScreen+uiAutomation if no tool matches.
   After captureScreen(), you will see a screenshot. Use what you see to decide the next step.
   """
 
@@ -96,8 +98,10 @@ internal const val DEFAULT_SYSTEM_PROMPT_SKILLS_ONLY =
   - appBrowse(app) - 浏览app。例: appBrowse("小红书")
   - captureScreen() - 截屏查看当前屏幕(会自动发送截图给你看)
   - uiAutomation(action, parameters) - UI操作(tap, tap_element, type_text, swipe, scroll, back, home, keyevent)
+  - runIntent(action, parameters) - 执行意图。若appSearch失败，用runIntent("search_in_app", "{\"app\":\"抖音\",\"query\":\"科技视频\"}")
 
-  Rule: Use appSearch/openApp/sendMessage/checkAndReply first. Only use captureScreen+uiAutomation if no tool matches.
+  Rule: Use appSearch/openApp/sendMessage/checkAndReply first. If appSearch fails, use runIntent("search_in_app", ...) instead.
+  Only use captureScreen+uiAutomation if no tool matches.
   After captureScreen(), you will see a screenshot. Use what you see to decide the next step.
   """
 

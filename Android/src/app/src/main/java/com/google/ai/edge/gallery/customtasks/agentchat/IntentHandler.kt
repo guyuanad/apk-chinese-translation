@@ -39,6 +39,9 @@ import java.util.Locale
 @JsonClass(generateAdapter = true)
 data class OpenAppParams(val package_name: String)
 
+@JsonClass(generateAdapter = true)
+data class SearchInAppParams(val app: String, val query: String)
+
 /** Map common Chinese app names to package names for fallback. */
 private val APP_NAME_TO_PACKAGE_MAP = mapOf(
   "抖音" to "com.ss.android.ugc.aweme",
@@ -155,6 +158,7 @@ enum class IntentAction(
   val requiresUserConfirmation: Boolean = false,
   val confirmationMessage: String = "",
 ) {
+  SEARCH_IN_APP("search_in_app"),
   OPEN_APP("open_app"),
   SEND_EMAIL(
     "send_email",
@@ -283,6 +287,24 @@ object IntentHandler {
     requestPermission: suspend (String) -> Boolean,
   ): String {
     return when (IntentAction.from(action)) {
+      IntentAction.SEARCH_IN_APP -> {
+        try {
+          val moshi = Moshi.Builder().build()
+          val jsonAdapter = moshi.adapter(SearchInAppParams::class.java)
+          val params = jsonAdapter.fromJson(parameters)
+          if (params != null && params.app.isNotEmpty() && params.query.isNotEmpty()) {
+            // Return a special result so AgentTools can route to runFSM with proper permission handling
+            Log.d(TAG, "search_in_app: app=${params.app}, query=${params.query}")
+            "delegated_to_fsm:${params.app}:${params.query}"
+          } else {
+            Log.e(TAG, "Failed to parse search_in_app parameters: $parameters")
+            "failed: app and query are required"
+          }
+        } catch (e: Exception) {
+          Log.e(TAG, "Failed to search in app: $parameters", e)
+          "failed: ${e.message}"
+        }
+      }
       IntentAction.OPEN_APP -> {
         try {
           val moshi = Moshi.Builder().build()

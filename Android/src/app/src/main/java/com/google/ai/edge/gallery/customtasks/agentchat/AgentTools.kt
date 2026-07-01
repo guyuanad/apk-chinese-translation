@@ -1134,8 +1134,8 @@ open class AgentTools(
         "If you don't know the package name, use the display name."
   )
   fun runIntent(
-    @ToolParam(description = "The action to run: open_app, send_email, send_sms, create_calendar_event, get_current_date_and_time, etc.") intent: String,
-    @ToolParam(description = "JSON string of parameters. For open_app: {\"package_name\": \"app display name or package name\"}")
+    @ToolParam(description = "The action to run: search_in_app, open_app, send_email, send_sms, create_calendar_event, get_current_date_and_time, etc.") intent: String,
+    @ToolParam(description = "JSON string of parameters. For search_in_app: {\"app\": \"抖音\", \"query\": \"科技视频\"}. For open_app: {\"package_name\": \"app display name or package name\"}")
     parameters: String,
   ): Map<String, String> {
     return runBlocking(Dispatchers.Default) {
@@ -1190,6 +1190,17 @@ open class AgentTools(
         permissionAction.result.await()
       }
     val result = mapOf("action" to intent, "parameters" to parameters, "result" to res)
+    // Handle delegated search_in_app: route to runFSM for proper permission handling
+    if (res.startsWith("delegated_to_fsm:")) {
+      val parts = res.split(":")
+      if (parts.size >= 3) {
+        val app = parts[1]
+        val query = parts.drop(2).joinToString(":") // handle colons in query
+        writeLog("D", TAG, "search_in_app delegated to FSM: app=$app, query=$query")
+        val fsmResult = runFSM("app_search", mapOf("app" to app, "query" to query))
+        return fsmResult.map { (k, v) -> k to (v?.toString() ?: "") }.toMap()
+      }
+    }
     // Set pending flag and guide the model to continue with captureScreen after opening an app
     if (intent == "open_app" && res == "succeeded") {
       pendingAppOpen = true
